@@ -20,6 +20,7 @@ const App = () => {
         setAccount(accounts[0]);
         setContract(contract);
         await fetchSteps(contract);
+        await fetchCompletedSteps(contract); // Carica i tracciamenti completati inizialmente
         const currentIndex = await contract.methods.currentStepIndex().call();
         setCurrentStepIndex(parseInt(currentIndex));
       } catch (error) {
@@ -33,25 +34,38 @@ const App = () => {
     try {
       const stepsLength = await contract.methods.getStepsLength().call();
       const steps = [];
-      const completed = [];
       for (let i = 0; i < stepsLength; i++) {
         const step = await contract.methods.getStep(i).call();
         steps.push(step);
-        if (step[2]) { // Se la fase è completata, la aggiungiamo ai passati
-          completed.push(step);
-        }
       }
       setSteps(steps);
-      setCompletedSteps(completed);
       setSupervisorAddresses(Array(stepsLength).fill(''));
     } catch (error) {
       console.error("Error fetching steps:", error);
     }
   };
 
+  const fetchCompletedSteps = async (contract) => {
+    try {
+      const completedStepsLength = await contract.methods.getCompletedStepsLength().call();
+      const completedSteps = [];
+      for (let i = 0; i < completedStepsLength; i++) {
+        const step = await contract.methods.getCompletedStep(i).call();
+        completedSteps.push(step);
+      }
+      setCompletedSteps(completedSteps);
+    } catch (error) {
+      console.error("Error fetching completed steps:", error);
+    }
+  };
+
   const assignSupervisor = async (index) => {
     try {
-      await contract.methods.assignSupervisor(index, supervisorAddresses[index]).send({ from: account });
+      const supervisorAddress = supervisorAddresses[index].trim();
+      if (!web3.utils.isAddress(supervisorAddress)) {
+        throw new Error("Invalid supervisor address");
+      }
+      await contract.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
       await fetchSteps(contract);
     } catch (error) {
       console.error("Error assigning supervisor:", error);
@@ -62,6 +76,7 @@ const App = () => {
     try {
       await contract.methods.completeStep().send({ from: account });
       await fetchSteps(contract);
+      await fetchCompletedSteps(contract); // Aggiorna i tracciamenti completati
       const currentIndex = await contract.methods.currentStepIndex().call();
       setCurrentStepIndex(parseInt(currentIndex));
     } catch (error) {
@@ -74,6 +89,7 @@ const App = () => {
       await contract.methods.resetProcess().send({ from: account });
       await fetchSteps(contract);
       setCurrentStepIndex(0);
+      // Non aggiornare i tracciamenti completati qui, lasciali come sono
     } catch (error) {
       console.error("Error resetting process:", error);
     }
@@ -130,8 +146,8 @@ const App = () => {
         <button onClick={resetProcess}>Reset Process</button>
       )}
 
-       {/* Sezione per tracciamenti passati */}
-       <h2>Completed Steps</h2>
+        {/* Sezione per tracciamenti passati */}
+      <h2>Completed Steps</h2>
       <table>
         <thead>
           <tr>
@@ -142,15 +158,14 @@ const App = () => {
           </tr>
         </thead>
         <tbody>
-        {completedSteps.map((step, index) => (
-  <tr key={index}>
-    <td>{step[0]}</td>
-    <td>{step[1]}</td>
-    <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
-    <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
-  </tr>
-))}
-
+          {completedSteps.map((step, index) => (
+            <tr key={index}>
+              <td>{step[0]}</td>
+              <td>{step[1]}</td>
+              <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
+              <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

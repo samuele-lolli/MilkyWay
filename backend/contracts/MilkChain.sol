@@ -12,6 +12,7 @@ contract MilkChain {
 
     Step[] public steps;
     uint public currentStepIndex;
+    Step[] public completedSteps;
 
     event StepCompleted(uint stepIndex, string name, uint endTime);
     event ProcessReset();
@@ -39,7 +40,10 @@ contract MilkChain {
         Step storage step = steps[currentStepIndex];
         require(msg.sender == step.supervisor, "Only assigned supervisor can complete the step");
         step.completed = true;
-        step.endTime = block.timestamp; // Aggiungiamo il timestamp di fine fase
+        step.endTime = block.timestamp;
+
+        completedSteps.push(step);
+
         emit StepCompleted(currentStepIndex, step.name, step.endTime);
         currentStepIndex++;
     }
@@ -57,6 +61,16 @@ contract MilkChain {
     function getStep(uint index) public view returns (string memory, address, bool, uint, uint) {
         require(index < steps.length, "Step index out of range");
         Step storage step = steps[index];
+        return (step.name, step.supervisor, step.completed, step.startTime, step.endTime);
+    }
+
+    function getCompletedStepsLength() public view returns (uint) {
+        return completedSteps.length;
+    }
+
+    function getCompletedStep(uint index) public view returns (string memory, address, bool, uint, uint) {
+        require(index < completedSteps.length, "Completed step index out of range");
+        Step storage step = completedSteps[index];
         return (step.name, step.supervisor, step.completed, step.startTime, step.endTime);
     }
 
