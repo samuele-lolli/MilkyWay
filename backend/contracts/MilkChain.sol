@@ -14,7 +14,7 @@ contract MilkChain {
     uint public currentStepIndex;
     Step[] public completedSteps;
 
-    event StepCompleted(uint stepIndex, string name, uint endTime);
+    event StepCompleted(uint stepIndex, string name, uint startTime, uint endTime);
     event ProcessReset();
 
     constructor() {
@@ -42,9 +42,15 @@ contract MilkChain {
         step.completed = true;
         step.endTime = block.timestamp;
 
+        if (currentStepIndex == 0) {
+            step.startTime = block.timestamp;
+        } else {
+            step.startTime = steps[currentStepIndex - 1].endTime;
+        }
+
         completedSteps.push(step);
 
-        emit StepCompleted(currentStepIndex, step.name, step.endTime);
+        emit StepCompleted(currentStepIndex, step.name, step.startTime, step.endTime);
         currentStepIndex++;
     }
 
