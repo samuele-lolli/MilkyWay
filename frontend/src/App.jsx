@@ -10,6 +10,7 @@ const App = () => {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [completedSteps, setCompletedSteps] = useState([]);
     const [locationInput, setLocationInput] = useState('');
+    const [currentLotNumber, setCurrentLotNumber] = useState(1);
 
     useEffect(() => {
         const init = async () => {
@@ -20,16 +21,22 @@ const App = () => {
                 setWeb3(web3);
                 setAccount(accounts[0]);
                 setContract(contract);
-                await fetchSteps(contract);
-                await fetchCompletedSteps(contract); // Carica i tracciamenti completati inizialmente
-                const currentIndex = await contract.methods.currentStepIndex().call();
-                setCurrentStepIndex(parseInt(currentIndex));
+                await updateState(contract);
             } catch (error) {
                 console.error("Error initializing web3, accounts, or contract:", error);
             }
         };
         init();
     }, []);
+
+    const updateState = async (contract) => {
+        await fetchSteps(contract);
+        await fetchCompletedSteps(contract);
+        const currentIndex = await contract.methods.currentStepIndex().call();
+        setCurrentStepIndex(parseInt(currentIndex));
+        const lotNumber = await contract.methods.getCurrentLotNumber().call();
+        setCurrentLotNumber(Number(lotNumber));
+    };
 
     const fetchSteps = async (contract) => {
         try {
@@ -60,6 +67,12 @@ const App = () => {
         }
     };
 
+    const getNextLotNumber = () => {
+        const lastDistribuzioneStep = completedSteps.filter(step => step[0] === "Distribuzione").pop();
+        console.log(lastDistribuzioneStep);
+        return lastDistribuzioneStep ? Number(lastDistribuzioneStep[6]) + 1 : 1;
+    };
+
     const assignSupervisor = async (index) => {
         try {
             const supervisorAddress = supervisorAddresses[index].trim();
@@ -67,7 +80,7 @@ const App = () => {
                 throw new Error("Invalid supervisor address");
             }
             await contract.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
-            await fetchSteps(contract);
+            await updateState(contract);
         } catch (error) {
             console.error("Error assigning supervisor:", error);
         }
@@ -75,117 +88,148 @@ const App = () => {
 
     const completeStep = async () => {
         try {
-            // Simuliamo la verifica dell'indirizzo con una funzione esterna
-            const isReasonableLocation = true; // Simulazione della verifica dell'indirizzo
-
+            const isReasonableLocation = true; // Simulated location check
+    
             if (!isReasonableLocation) {
                 throw new Error("Location is not reasonable for this step");
             }
-
+    
             await contract.methods.completeStep(locationInput).send({ from: account });
-            await fetchSteps(contract);
-            await fetchCompletedSteps(contract); // Aggiorna i tracciamenti completati
-            const currentIndex = await contract.methods.currentStepIndex().call();
-            setCurrentStepIndex(parseInt(currentIndex));
+            await updateState(contract);
+    
+            // Increment lot number if the current step is "Distribuzione"
+            if (steps[currentStepIndex][0] === "Distribuzione") {
+                const newLotNumber = currentLotNumber + 1;
+                setCurrentLotNumber(newLotNumber);
+            }
+    
         } catch (error) {
             console.error("Error completing step:", error);
         }
     };
-
+    
     const resetProcess = async () => {
+        setCurrentLotNumber(getNextLotNumber());
         try {
             await contract.methods.resetProcess().send({ from: account });
-            await fetchSteps(contract);
-            setCurrentStepIndex(0);
-            // Non aggiornare i tracciamenti completati qui, lasciali come sono
+            await updateState(contract);
         } catch (error) {
             console.error("Error resetting process:", error);
         }
     };
 
+    const groupStepsByLot = (completedSteps) => {
+        const lots = {};
+        completedSteps.forEach((step) => {
+            const lotNumber = step[6];
+            if (!lots[lotNumber]) {
+                lots[lotNumber] = [];
+            }
+            lots[lotNumber].push(step);
+        });
+        return lots;
+    };
+
+    const renderLots = () => {
+        const lots = groupStepsByLot(completedSteps);
+        const lotNumbers = Object.keys(lots).sort((a, b) => a - b);
+        return lotNumbers.map((lotNumber) => (
+            <div key={lotNumber}>
+                <h3>Lotto {Number(lotNumber)}</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Supervisor</th>
+                            <th>Status</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {lots[lotNumber].map((step, index) => (
+                            <tr key={index}>
+                                <td>{step[0]}</td>
+                                <td>{step[1]}</td>
+                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
+                                <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
+                                <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
+                                <td>{step[5]}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        ));
+    };
+
     return (
         <div>
             <h1>Milk Supply Chain</h1>
+            <label>Current Lot Number: {currentLotNumber}</label>
             <table>
                 <thead>
                     <tr>
                         <th>Step</th>
                         <th>Supervisor</th>
                         <th>Status</th>
+                        <th>Location</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {steps.map((step, index) => (
-                        <tr key={index}>
-                            <td>{step[0]}</td>
-                            <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Not Assigned' : step[1]}</td>
-                            <td>{step[2] ? 'Completed' : 'Pending'}</td>
-                            <td>
-                                {!step[2] && index === currentStepIndex && (
-                                    <>
-                                        {step[1] === '0x0000000000000000000000000000000000000000' ? (
-                                            <div>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Supervisor Address"
-                                                    value={supervisorAddresses[index]}
-                                                    onChange={(e) => {
-                                                        const newAddresses = [...supervisorAddresses];
-                                                        newAddresses[index] = e.target.value;
-                                                        setSupervisorAddresses(newAddresses);
-                                                    }}
-                                                />
-                                                <button onClick={() => assignSupervisor(index)}>Assign Supervisor</button>
-                                            </div>
-                                        ) : (
-                                            step[1] === account && (
-                                                <>
+                    {steps.map((step, index) => {
+                        return (
+                            <tr key={index}>
+                                <td>{step[0]}</td>
+                                <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Not Assigned' : step[1]}</td>
+                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
+                                <td>{step[5]}</td> {/* Display location */}
+                                <td>
+                                    {index <= currentStepIndex && (
+                                        <>
+                                            {step[1] === '0x0000000000000000000000000000000000000000' ? (
+                                                <div>
                                                     <input
                                                         type="text"
-                                                        placeholder="Location (e.g., address or coordinates)"
-                                                        value={locationInput}
-                                                        onChange={(e) => setLocationInput(e.target.value)}
+                                                        placeholder="Supervisor Address"
+                                                        value={supervisorAddresses[index]}
+                                                        onChange={(e) => {
+                                                            const newAddresses = [...supervisorAddresses];
+                                                            newAddresses[index] = e.target.value;
+                                                            setSupervisorAddresses(newAddresses);
+                                                        }}
                                                     />
-                                                    <button onClick={completeStep}>Complete Step</button>
-                                                </>
-                                            )
-                                        )}
-                                    </>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
+                                                    <button onClick={() => assignSupervisor(index)}>Assign Supervisor</button>
+                                                </div>
+                                            ) : (
+                                                step[1] === account && !step[2] && (
+                                                    <>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Location (e.g., address or coordinates)"
+                                                            value={locationInput}
+                                                            onChange={(e) => setLocationInput(e.target.value)}
+                                                        />
+                                                        <button onClick={completeStep}>Complete Step</button>
+                                                    </>
+                                                )
+                                            )}
+                                        </>
+                                    )}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
             {currentStepIndex >= steps.length && (
                 <button onClick={resetProcess}>Reset Process</button>
             )}
 
-            {/* Sezione per tracciamenti passati */}
             <h2>Completed Steps</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Step</th>
-                        <th>Supervisor</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Location</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {completedSteps.map((step, index) => (
-                        <tr key={index}>
-                            <td>{step[0]}</td>
-                            <td>{step[1]}</td>
-                            <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
-                            <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
-                            <td>{step[5]}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            {renderLots()}
         </div>
     );
 };
