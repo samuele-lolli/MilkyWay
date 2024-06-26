@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getWeb3, getContract } from './MilkChain';
+import SearchByLotNumber from './components/SearchByLotNumber';
+import CompletedSteps from './components/CompletedSteps';
+import ActiveSteps from './components/ActiveSteps';
 
 const App = () => {
     const [web3, setWeb3] = useState(null);
@@ -9,10 +12,9 @@ const App = () => {
     const [supervisorAddresses, setSupervisorAddresses] = useState([]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [completedSteps, setCompletedSteps] = useState([]);
-    const [locationInput, setLocationInput] = useState('');
     const [currentLotNumber, setCurrentLotNumber] = useState(1);
     const [searchLotNumber, setSearchLotNumber] = useState('');
-    const [filteredSteps, setFilteredSteps] = useState([]); 
+    const [filteredSteps, setFilteredSteps] = useState([]);
 
     useEffect(() => {
         const init = async () => {
@@ -37,7 +39,6 @@ const App = () => {
         const currentIndex = await contract.methods.getCurrentStepIndex().call();
         setCurrentStepIndex(parseInt(currentIndex));
         const lotNumber = await contract.methods.getCurrentLotNumber().call();
-        console.log(lotNumber)
         setCurrentLotNumber(Number(lotNumber));
     };
 
@@ -70,227 +71,32 @@ const App = () => {
         }
     };
 
-    const getNextLotNumber = () => {
-        const lastDistribuzioneStep = completedSteps.filter(step => step[0] === "Distribuzione").pop();
-        return lastDistribuzioneStep ? Number(lastDistribuzioneStep[6]) + 1 : 1;
-    };
-
-    const assignSupervisor = async (index) => {
-        try {
-            const supervisorAddress = supervisorAddresses[index].trim();
-            if (!web3.utils.isAddress(supervisorAddress)) {
-                throw new Error("Invalid supervisor address");
-            }
-            await contract.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
-            await updateState(contract);
-        } catch (error) {
-            console.error("Error assigning supervisor:", error);
-        }
-    };
-
-    const completeStep = async () => {
-        try {
-            const isReasonableLocation = true; // Simulated location check
-    
-            if (!isReasonableLocation) {
-                throw new Error("Location is not reasonable for this step");
-            }
-    
-            await contract.methods.completeStep(locationInput).send({ from: account });
-            await updateState(contract);
-    
-            // Increment lot number if the current step is "Distribuzione"
-            if (steps[currentStepIndex][0] === "Distribuzione") {
-                const newLotNumber = currentLotNumber + 1;
-                setCurrentLotNumber(newLotNumber);
-            }
-    
-        } catch (error) {
-            console.error("Error completing step:", error);
-        }
-    };
-    
-    const resetProcess = async () => {
-        setCurrentLotNumber(getNextLotNumber());
-        try {
-            await contract.methods.resetProcess().send({ from: account });
-            await updateState(contract);
-        } catch (error) {
-            console.error("Error resetting process:", error);
-        }
-    };
-
-    const groupStepsByLot = (completedSteps) => {
-        const lots = {};
-        completedSteps.forEach((step) => {
-            const lotNumber = String(step[6]);
-            if (!lots[lotNumber]) {
-                lots[lotNumber] = [];
-            }
-            lots[lotNumber].push(step);
-        });
-        return lots;
-    };
-
-    const handleSearch = (event) => {
-        const lotNumber = event.target.value;
-        setSearchLotNumber(lotNumber);
-        if (lotNumber) {
-            console.log(lotNumber)
-            console.log(completedSteps[0])
-            const filtered = completedSteps.filter(step => String(step[6]) === lotNumber);
-            setFilteredSteps(filtered);
-        } else {
-            setFilteredSteps([]);
-        }
-    };
-
-    const renderLots = () => {
-        const lots = groupStepsByLot(completedSteps);
-        const lotNumbers = Object.keys(lots).sort((a, b) => a - b);
-        return lotNumbers.map((lotNumber) => (
-            <div key={lotNumber}>
-                <h3>Lotto {Number(lotNumber)}</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Step</th>
-                            <th>Supervisor</th>
-                            <th>Status</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Location</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {lots[lotNumber].map((step, index) => (
-                            <tr key={index}>
-                                <td>{step[0]}</td>
-                                <td>{step[1]}</td>
-                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
-                                <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
-                                <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
-                                <td>{step[5]}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        ));
-    };
-
-    const renderFilteredSteps = () => (
-        <div>
-            <h2>Risultati della ricerca per lotto {searchLotNumber}</h2>
-            {filteredSteps.length > 0 ? (
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Step</th>
-                            <th>Supervisor</th>
-                            <th>Status</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Location</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredSteps.map((step, index) => (
-                            <tr key={index}>
-                                <td>{step[0]}</td>
-                                <td>{step[1]}</td>
-                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
-                                <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
-                                <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
-                                <td>{step[5]}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>Nessun risultato trovato per il lotto {searchLotNumber}</p>
-            )}
-        </div>
-    );
-
-
     return (
         <div>
-            <h1>Milk Supply Chain</h1>
-            <label>Current Lot Number: {currentLotNumber}</label>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Step</th>
-                        <th>Supervisor</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {steps.map((step, index) => {
-                        return (
-                            <tr key={index}>
-                                <td>{step[0]}</td>
-                                <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Not Assigned' : step[1]}</td>
-                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
-                                <td>{step[5]}</td> {/* Display location */}
-                                <td>
-                                    {index <= currentStepIndex && (
-                                        <>
-                                            {step[1] === '0x0000000000000000000000000000000000000000' ? (
-                                                <div>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Supervisor Address"
-                                                        value={supervisorAddresses[index]}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...supervisorAddresses];
-                                                            newAddresses[index] = e.target.value;
-                                                            setSupervisorAddresses(newAddresses);
-                                                        }}
-                                                    />
-                                                    <button onClick={() => assignSupervisor(index)}>Assign Supervisor</button>
-                                                </div>
-                                            ) : (
-                                                step[1] === account && !step[2] && (
-                                                    <>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Location (e.g., address or coordinates)"
-                                                            value={locationInput}
-                                                            onChange={(e) => setLocationInput(e.target.value)}
-                                                        />
-                                                        <button onClick={completeStep}>Complete Step</button>
-                                                    </>
-                                                )
-                                            )}
-                                        </>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-            {currentStepIndex >= steps.length && (
-                <button onClick={resetProcess}>Reset Process</button>
-            )}
+            <ActiveSteps
+                web3={web3}
+                contract={contract}
+                account={account}
+                steps={steps}
+                currentStepIndex={currentStepIndex}
+                supervisorAddresses={supervisorAddresses}
+                setSupervisorAddresses={setSupervisorAddresses}
+                currentLotNumber={currentLotNumber}
+                setCurrentLotNumber={setCurrentLotNumber}
+                updateState={updateState}
+            />
 
-            <h2>Completed Steps</h2>
-            {renderLots()}
+            <CompletedSteps
+                completedSteps={completedSteps}
+            />
 
-            <div>
-                <h2>Ricerca per Numero di Lotto</h2>
-                <input
-                    type="text"
-                    value={searchLotNumber}
-                    onChange={handleSearch}
-                    placeholder="Inserisci il numero di lotto"
-                />
-                {searchLotNumber && renderFilteredSteps()}
-            </div>
+            <SearchByLotNumber
+                searchLotNumber={searchLotNumber}
+                setSearchLotNumber={setSearchLotNumber}
+                filteredSteps={filteredSteps}
+                setFilteredSteps={setFilteredSteps}
+                completedSteps={completedSteps}
+            />
         </div>
     );
 };
