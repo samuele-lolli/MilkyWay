@@ -102,6 +102,10 @@ contract MilkChain {
         return currentStepIndex >= steps.length;
     }
 
+    function getCurrentStepIndex() public view returns (uint) {
+        return currentStepIndex;
+    }
+
     function getCurrentLotNumber() public view returns (uint) {
         return currentLotNumber;
     }
