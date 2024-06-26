@@ -41,7 +41,6 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, supervi
 
     return (
         <div>
-            <h1>Milk Supply Chain</h1>
             <label>Current Lot Number: {currentLotNumber}</label>
             <table>
                 <thead>

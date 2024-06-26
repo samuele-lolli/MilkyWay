@@ -73,6 +73,7 @@ const App = () => {
 
     return (
         <div>
+            <h1>Milk Supply Chain</h1>
             <ActiveSteps
                 web3={web3}
                 contract={contract}
