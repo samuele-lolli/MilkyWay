@@ -21,7 +21,7 @@ contract MilkChain {
     event ProcessReset(uint newLotNumber);
 
     constructor() {
-        currentLotNumber = 1; // Initialize the lot number to 1
+        currentLotNumber = 1;
         initializeSteps();
     }
 
@@ -79,8 +79,8 @@ contract MilkChain {
         emit ProcessReset(currentLotNumber);
     }
 
-    function getStepsLength() public view returns (uint) {
-        return steps.length;
+    function getCurrentStepIndex() public view returns (uint) {
+        return currentStepIndex;
     }
 
     function getStep(uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint) {
@@ -97,6 +97,10 @@ contract MilkChain {
         require(index < completedSteps.length, "Completed step index out of range");
         Step storage step = completedSteps[index];
         return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
+    }
+
+    function getStepsLength() public view returns (uint) {
+        return steps.length;
     }
 
     function isProcessCompleted() public view returns (bool) {

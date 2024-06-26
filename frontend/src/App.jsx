@@ -11,6 +11,8 @@ const App = () => {
     const [completedSteps, setCompletedSteps] = useState([]);
     const [locationInput, setLocationInput] = useState('');
     const [currentLotNumber, setCurrentLotNumber] = useState(1);
+    const [searchLotNumber, setSearchLotNumber] = useState('');
+    const [filteredSteps, setFilteredSteps] = useState([]); 
 
     useEffect(() => {
         const init = async () => {
@@ -32,9 +34,10 @@ const App = () => {
     const updateState = async (contract) => {
         await fetchSteps(contract);
         await fetchCompletedSteps(contract);
-        const currentIndex = await contract.methods.currentStepIndex().call();
+        const currentIndex = await contract.methods.getCurrentStepIndex().call();
         setCurrentStepIndex(parseInt(currentIndex));
         const lotNumber = await contract.methods.getCurrentLotNumber().call();
+        console.log(lotNumber)
         setCurrentLotNumber(Number(lotNumber));
     };
 
@@ -69,7 +72,6 @@ const App = () => {
 
     const getNextLotNumber = () => {
         const lastDistribuzioneStep = completedSteps.filter(step => step[0] === "Distribuzione").pop();
-        console.log(lastDistribuzioneStep);
         return lastDistribuzioneStep ? Number(lastDistribuzioneStep[6]) + 1 : 1;
     };
 
@@ -121,13 +123,26 @@ const App = () => {
     const groupStepsByLot = (completedSteps) => {
         const lots = {};
         completedSteps.forEach((step) => {
-            const lotNumber = step[6];
+            const lotNumber = String(step[6]);
             if (!lots[lotNumber]) {
                 lots[lotNumber] = [];
             }
             lots[lotNumber].push(step);
         });
         return lots;
+    };
+
+    const handleSearch = (event) => {
+        const lotNumber = event.target.value;
+        setSearchLotNumber(lotNumber);
+        if (lotNumber) {
+            console.log(lotNumber)
+            console.log(completedSteps[0])
+            const filtered = completedSteps.filter(step => String(step[6]) === lotNumber);
+            setFilteredSteps(filtered);
+        } else {
+            setFilteredSteps([]);
+        }
     };
 
     const renderLots = () => {
@@ -163,6 +178,41 @@ const App = () => {
             </div>
         ));
     };
+
+    const renderFilteredSteps = () => (
+        <div>
+            <h2>Risultati della ricerca per lotto {searchLotNumber}</h2>
+            {filteredSteps.length > 0 ? (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Supervisor</th>
+                            <th>Status</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredSteps.map((step, index) => (
+                            <tr key={index}>
+                                <td>{step[0]}</td>
+                                <td>{step[1]}</td>
+                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
+                                <td>{step[3] !== '0' ? new Date(parseInt(step[3]) * 1000).toLocaleString() : '-'}</td>
+                                <td>{step[4] !== '0' ? new Date(parseInt(step[4]) * 1000).toLocaleString() : '-'}</td>
+                                <td>{step[5]}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p>Nessun risultato trovato per il lotto {searchLotNumber}</p>
+            )}
+        </div>
+    );
+
 
     return (
         <div>
@@ -230,6 +280,17 @@ const App = () => {
 
             <h2>Completed Steps</h2>
             {renderLots()}
+
+            <div>
+                <h2>Ricerca per Numero di Lotto</h2>
+                <input
+                    type="text"
+                    value={searchLotNumber}
+                    onChange={handleSearch}
+                    placeholder="Inserisci il numero di lotto"
+                />
+                {searchLotNumber && renderFilteredSteps()}
+            </div>
         </div>
     );
 };
