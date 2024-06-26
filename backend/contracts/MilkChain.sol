@@ -21,7 +21,7 @@ contract MilkChain {
     event ProcessReset(uint newLotNumber);
 
     constructor() {
-        currentLotNumber = 1;
+        currentLotNumber = 1; // Initialize the lot number to 1
         initializeSteps();
     }
 
@@ -67,7 +67,6 @@ contract MilkChain {
         }
     }
 
-
     function isReasonableLocation(string memory _location) internal pure returns (bool) {
         return bytes(_location).length > 0; // Check that the location is not empty
     }
@@ -79,8 +78,8 @@ contract MilkChain {
         emit ProcessReset(currentLotNumber);
     }
 
-    function getCurrentStepIndex() public view returns (uint) {
-        return currentStepIndex;
+    function getStepsLength() public view returns (uint) {
+        return steps.length;
     }
 
     function getStep(uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint) {
@@ -97,10 +96,6 @@ contract MilkChain {
         require(index < completedSteps.length, "Completed step index out of range");
         Step storage step = completedSteps[index];
         return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
-    }
-
-    function getStepsLength() public view returns (uint) {
-        return steps.length;
     }
 
     function isProcessCompleted() public view returns (bool) {
@@ -144,5 +139,29 @@ contract MilkChain {
     function setLotNumber(uint index, uint lotNumber) public {
         require(index < steps.length, "Step index out of range");
         steps[index].lotNumber = lotNumber;
+    }
+
+    /**
+     * @notice Retrieves all completed steps for a given lot number.
+     * @param lotNumber The lot number to filter completed steps by.
+     * @return An array of completed steps for the given lot number.
+     */
+    function getLot(uint lotNumber) public view returns (Step[] memory) {
+        uint count = 0;
+        for (uint i = 0; i < completedSteps.length; i++) {
+            if (completedSteps[i].lotNumber == lotNumber) {
+                count++;
+            }
+        }
+
+        Step[] memory lotSteps = new Step[](count);
+        uint index = 0;
+        for (uint i = 0; i < completedSteps.length; i++) {
+            if (completedSteps[i].lotNumber == lotNumber) {
+                lotSteps[index] = completedSteps[i];
+                index++;
+            }
+        }
+        return lotSteps;
     }
 }
