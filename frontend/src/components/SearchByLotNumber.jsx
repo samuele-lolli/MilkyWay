@@ -1,4 +1,9 @@
+import { useState } from 'react';
+import { Input, CloseButton, useMantineTheme } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
+
 const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps, setFilteredSteps, completedSteps }) => {
+    const theme = useMantineTheme();
 
     const handleSearch = (event) => {
         const lotNumber = event.target.value;
@@ -11,14 +16,40 @@ const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps,
         }
     };
 
+    const clearSearch = () => {
+        setSearchLotNumber('');
+        setFilteredSteps([]);
+    };
+
+    const inputStyles = {
+        input: {
+            borderColor: theme.colors.brand[6], // #497DAC
+            borderWidth: '2px',
+            maxWidth: '500px'
+        },
+        wrapper: {
+            maxWidth: '500px', // Imposta la larghezza massima del contenitore wrapper
+        }
+    };
+
     return (
         <div>
             <h2>Search by Lot Number</h2>
-            <input
+            <Input
                 type="text"
+                leftSection={<IconSearch size={16} />}
+                radius="md"
                 value={searchLotNumber}
                 onChange={handleSearch}
+                mt="md"
                 placeholder="Inserisci il numero di lotto"
+                rightSection={
+                    <CloseButton
+                        aria-label="Clear input"
+                        onClick={clearSearch}
+                    />
+                }
+                styles={inputStyles}
             />
             {searchLotNumber && (
                 <div>

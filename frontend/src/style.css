@@ -1,0 +1,105 @@
+/* style.css */
+@font-face {
+    font-family: 'SuperMilk';
+    src: url('./assets/fonts/SuperMilk.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Product Sans';
+    src: url('./assets/fonts/Product Sans Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Product Sans';
+    src: url('./assets/fonts/Product Sans Italic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Product Sans';
+    src: url('./assets/fonts/Product Sans Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Product Sans';
+    src: url('./assets/fonts/Product Sans Bold Italic.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+}
+
+body {
+    margin: 0;
+    font-family: 'Product Sans';
+}
+
+.splash-screen {
+    display: flex;
+    flex-direction: column;
+    background-image: url('./assets/bg.png'); /* Percorso relativo al file bg.png */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.splash-screen h1 {
+    margin-bottom: 5px; /* Riduce lo spazio sotto "Benvenuto in" */
+    font-size: 24px;
+    color: white;
+}
+
+.splash-screen h2 {
+    margin-top: 0; /* Rimuove lo spazio sopra "MILKYWAY" */
+    margin-bottom: 5px; 
+    font-size: 120px;
+    color: white;
+    font-family: 'SuperMilk', Arial, sans-serif; /* Applica il font SuperMilk */
+}
+
+.splash-screen p {
+    font-size: 24px;
+    color: whitesmoke;
+    margin-top: 20px; /* Aggiunge uno spazio sopra il testo del paragrafo */
+}
+
+/* Aggiungi la nuova regola qui */
+#app-container > * {
+    margin: 20px;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px; /* Smaller font size for table */
+    text-align: left;
+}
+
+/* Table header styling */
+th, td {
+    padding: 8px 10px; /* Smaller padding for table cells */
+    border: 1px solid #ddd; /* Adds a border to table cells */
+}
+
+th {
+    background-color: #f4f4f4; /* Light grey background for table headers */
+}
+
+td {
+    background-color: #fff; /* White background for table cells */
+}
+
+#app-container {
+    padding: 20px;
+}

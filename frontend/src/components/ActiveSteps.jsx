@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
+import { Table, TextInput, Button } from '@mantine/core';
 
 const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, supervisorAddresses, setSupervisorAddresses, currentLotNumber, setCurrentLotNumber, updateState }) => {
+    const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
+    const [supervisorErrors, setSupervisorErrors] = useState(Array(steps.length).fill(''));
 
-    const [locationInput, setLocationInput] = useState('');
+    const handleKeyPress = async (e, index, type) => {
+        if (e.key === 'Enter') {
+            if (type === 'supervisor') {
+                await assignSupervisor(index);
+            } else if (type === 'location') {
+                await completeStep(index);
+            }
+        }
+    };
 
     const assignSupervisor = async (index) => {
         try {
@@ -12,92 +23,112 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, supervi
             }
             await contract.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
             await updateState(contract);
+            const newSupervisorErrors = [...supervisorErrors];
+            newSupervisorErrors[index] = '';
+            setSupervisorErrors(newSupervisorErrors);
         } catch (error) {
             console.error("Error assigning supervisor:", error);
+            const newSupervisorErrors = [...supervisorErrors];
+            newSupervisorErrors[index] = error.message;
+            setSupervisorErrors(newSupervisorErrors);
         }
     };
 
-    const completeStep = async () => {
+    const completeStep = async (index) => {
         try {
+            if (steps[index][1] === '0x0000000000000000000000000000000000000000') {
+                throw new Error("Supervisor not assigned for this step");
+            }
+
+            const location = locationInputs[index].trim();
             const isReasonableLocation = true; // Simulated location check
 
             if (!isReasonableLocation) {
                 throw new Error("Location is not reasonable for this step");
             }
 
-            await contract.methods.completeStep(locationInput).send({ from: account });
+            await contract.methods.completeStep(location).send({ from: account });
             await updateState(contract);
 
-            // Increment lot number if the current step is "Distribuzione"
             if (steps[currentStepIndex][0] === "Distribuzione") {
                 const newLotNumber = currentLotNumber + 1;
                 setCurrentLotNumber(newLotNumber);
             }
-
         } catch (error) {
             console.error("Error completing step:", error);
         }
     };
 
+    const handleSupervisorChange = (e, index) => {
+        const newAddresses = [...supervisorAddresses];
+        newAddresses[index] = e.target.value;
+        setSupervisorAddresses(newAddresses);
+        const newSupervisorErrors = [...supervisorErrors];
+        newSupervisorErrors[index] = '';
+        setSupervisorErrors(newSupervisorErrors);
+    };
+
+    const handleLocationChange = (e, index) => {
+        const newLocations = [...locationInputs];
+        newLocations[index] = e.target.value;
+        setLocationInputs(newLocations);
+    };
+
+    const inputStyles = {
+        padding: '8px', // Add desired padding here
+    };
+
     return (
         <div>
             <label>Current Lot Number: {currentLotNumber}</label>
-            <table>
+            <Table>
                 <thead>
                     <tr>
                         <th>Step</th>
                         <th>Supervisor</th>
                         <th>Status</th>
                         <th>Location</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {steps.map((step, index) => {
-                        return (
-                            <tr key={index}>
-                                <td>{step[0]}</td>
-                                <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Not Assigned' : step[1]}</td>
-                                <td>{step[2] ? 'Completed' : 'Pending'}</td>
-                                <td>{step[5]}</td> {/* Display location */}
-                                <td>
-                                    {index <= currentStepIndex && (
-                                        <>
-                                            {step[1] === '0x0000000000000000000000000000000000000000' ? (
-                                                <div>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Supervisor Address"
-                                                        value={supervisorAddresses[index]}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...supervisorAddresses];
-                                                            newAddresses[index] = e.target.value;
-                                                            setSupervisorAddresses(newAddresses);
-                                                        }}
-                                                    />
-                                                    <button onClick={() => assignSupervisor(index)}>Assign Supervisor</button>
-                                                </div>
-                                            ) : (
-                                                step[1] === account && !step[2] && (
-                                                    <>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Location (e.g., address or coordinates)"
-                                                            value={locationInput}
-                                                            onChange={(e) => setLocationInput(e.target.value)}
-                                                        />
-                                                        <button onClick={completeStep}>Complete Step</button>
-                                                    </>
-                                                )
-                                            )}
-                                        </>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
+                    {steps.map((step, index) => (
+                        <tr key={index}>
+                            <td>{step[0]}</td>
+                            <td>
+                                {step[1] === '0x0000000000000000000000000000000000000000' ? (
+                                    <TextInput
+                                        radius="md"
+                                        variant="unstyled"
+                                        placeholder="Supervisor Address"
+                                        value={supervisorAddresses[index] || ''}
+                                        onChange={(e) => handleSupervisorChange(e, index)}
+                                        onKeyPress={(e) => handleKeyPress(e, index, 'supervisor')}
+                                    />
+                                ) : (
+                                    step[1]
+                                )}
+                            </td>
+                            <td>{step[2] ? 'Completed' : 'Pending'}</td>
+                            <td>
+                                {index <= currentStepIndex && !step[2] ? (
+                                    <TextInput
+                                        radius="md"
+                                        variant="unstyled"
+                                        placeholder="Location (e.g., address or coordinates)"
+                                        value={locationInputs[index] || ''}
+                                        onChange={(e) => handleLocationChange(e, index)}
+                                        onKeyPress={(e) => handleKeyPress(e, index, 'location')}
+                                        disabled={step[1] === '0x0000000000000000000000000000000000000000'}
+                                        styles={{ input: inputStyles }}
+                                    />
+                                ) : (
+                                    step[5]
+                                )}
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
-            </table>
+            </Table>
         </div>
     );
 };
