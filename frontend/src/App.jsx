@@ -4,24 +4,20 @@ import SearchByLotNumber from './components/SearchByLotNumber';
 import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';
 import SplashScreen from './components/SplashScreen';
-import { Title, Tabs, rem } from '@mantine/core';
+import { Title, Tabs, rem, Button } from '@mantine/core';
 import { IconSearch, IconHistory } from '@tabler/icons-react';
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
-  const [steps, setSteps] = useState([]);
-  const [supervisorAddresses, setSupervisorAddresses] = useState([]);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState([]);
-  const [currentLotNumber, setCurrentLotNumber] = useState(1);
+  const [processes, setProcesses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchLotNumber, setSearchLotNumber] = useState('');
   const [filteredSteps, setFilteredSteps] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const [completedProcesses, setCompletedProcesses] = useState([]);
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
-  const tabStyle = { padding: `${rem(12)} ${rem(18)}` }; // Personalizza il padding qui
+  const tabStyle = { padding: `${rem(12)} ${rem(18)}` };
 
   useEffect(() => {
     const init = async () => {
@@ -70,40 +66,45 @@ const App = () => {
   };
 
   const updateState = async (contract) => {
-    await fetchSteps(contract);
-    await fetchCompletedSteps(contract);
-    const currentIndex = await contract.methods.getCurrentStepIndex().call();
-    setCurrentStepIndex(parseInt(currentIndex));
     const lotNumber = await contract.methods.getCurrentLotNumber().call();
-    setCurrentLotNumber(Number(lotNumber));
+    const activeProcesses = [];
+    const completedProcesses = [];
+    for (let i = 1; i <= lotNumber; i++) {
+      const steps = await fetchSteps(contract, i);
+      const currentStepIndex = await contract.methods.getCurrentStepIndex(i).call();
+      const isCompleted = await contract.methods.isProcessCompleted(i).call();
+      const process = { lotNumber: i, steps, currentStepIndex: parseInt(currentStepIndex) };
+      if (isCompleted) {
+        completedProcesses.push(process);
+      } else {
+        activeProcesses.push(process);
+      }
+    }
+    setProcesses(activeProcesses);
+    setCompletedProcesses(completedProcesses);
   };
 
-  const fetchSteps = async (contract) => {
+  const fetchSteps = async (contract, lotNumber) => {
     try {
-      const stepsLength = await contract.methods.getStepsLength().call();
+      const stepsLength = await contract.methods.getStepsLength(lotNumber).call();
       const steps = [];
       for (let i = 0; i < stepsLength; i++) {
-        const step = await contract.methods.getStep(i).call();
+        const step = await contract.methods.getStep(lotNumber, i).call();
         steps.push(step);
       }
-      setSteps(steps);
-      setSupervisorAddresses(Array(stepsLength).fill(''));
+      return steps;
     } catch (error) {
       console.error("Error fetching steps:", error);
+      return [];
     }
   };
 
-  const fetchCompletedSteps = async (contract) => {
+  const createNewProcess = async () => {
     try {
-      const completedStepsLength = await contract.methods.getCompletedStepsLength().call();
-      const completedSteps = [];
-      for (let i = 0; i < completedStepsLength; i++) {
-        const step = await contract.methods.getCompletedStep(i).call();
-        completedSteps.push(step);
-      }
-      setCompletedSteps(completedSteps);
+      await contract.methods.createNewProcess().send({ from: account });
+      await updateState(contract);
     } catch (error) {
-      console.error("Error fetching completed steps:", error);
+      console.error("Error creating new process:", error);
     }
   };
 
@@ -114,18 +115,19 @@ const App = () => {
   return (
     <div id='app-container'>
       <Title order={1} weight={700}>Milk Supply Chain</Title>
-      <ActiveSteps
-        web3={web3}
-        contract={contract}
-        account={account}
-        steps={steps}
-        currentStepIndex={currentStepIndex}
-        supervisorAddresses={supervisorAddresses}
-        setSupervisorAddresses={setSupervisorAddresses}
-        currentLotNumber={currentLotNumber}
-        setCurrentLotNumber={setCurrentLotNumber}
-        updateState={updateState}
-      />
+      <Button onClick={createNewProcess}>Crea Nuovo Processo</Button>
+      {processes.map((process) => (
+        <ActiveSteps
+          key={process.lotNumber}
+          web3={web3}
+          contract={contract}
+          account={account}
+          steps={process.steps}
+          currentStepIndex={process.currentStepIndex}
+          lotNumber={process.lotNumber}
+          updateState={updateState}
+        />
+      ))}
 
       <Tabs variant="pills" radius="md" defaultValue="search">
         <Tabs.List>
@@ -133,7 +135,7 @@ const App = () => {
             <Title order={6}>Ricerca</Title>
           </Tabs.Tab>
           <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={tabStyle}>
-          <Title order={6}>Storico</Title>
+            <Title order={6}>Storico</Title>
           </Tabs.Tab>
         </Tabs.List>
 
@@ -143,13 +145,13 @@ const App = () => {
             setSearchLotNumber={setSearchLotNumber}
             filteredSteps={filteredSteps}
             setFilteredSteps={setFilteredSteps}
-            completedSteps={completedSteps}
+            completedSteps={completedProcesses.flatMap(p => p.steps.filter(s => s[2]))}
           />
         </Tabs.Panel>
 
         <Tabs.Panel value="history">
           <CompletedSteps
-            completedSteps={completedSteps}
+            completedSteps={completedProcesses.flatMap(p => p.steps.filter(s => s[2]))}
           />
         </Tabs.Panel>
         

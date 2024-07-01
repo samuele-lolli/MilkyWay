@@ -12,157 +12,113 @@ contract MilkChain {
         uint lotNumber;
     }
 
-    Step[] public steps;
-    uint public currentStepIndex;
-    Step[] public completedSteps;
+    struct Process {
+        Step[] steps;
+        uint currentStepIndex;
+        uint lotNumber;
+    }
+
+    mapping(uint => Process) public processes;
     uint public currentLotNumber;
 
-    event StepCompleted(uint stepIndex, string name, uint startTime, uint endTime, uint lotNumber);
+    event StepCompleted(uint lotNumber, uint stepIndex, string name, uint startTime, uint endTime);
     event ProcessReset(uint newLotNumber);
 
     constructor() {
-        currentLotNumber = 1; // Initialize the lot number to 1
-        initializeSteps();
+        currentLotNumber = 1; 
     }
 
-    function initializeSteps() internal {
-        steps.push(Step("Raccolta", address(0), false, 0, 0, "", currentLotNumber));
-        steps.push(Step("Trasporto", address(0), false, 0, 0, "", currentLotNumber));
-        steps.push(Step("Lavorazione", address(0), false, 0, 0, "", currentLotNumber));
-        steps.push(Step("Confezionamento", address(0), false, 0, 0, "", currentLotNumber));
-        steps.push(Step("Distribuzione", address(0), false, 0, 0, "", currentLotNumber));
-        currentStepIndex = 0;
+    function createNewProcess() public {
+        Process storage newProcess = processes[currentLotNumber];
+        newProcess.lotNumber = currentLotNumber;
+        initializeSteps(newProcess);
+        currentLotNumber++;
     }
 
-    function assignSupervisor(uint stepIndex, address supervisor) public {
-        require(stepIndex < steps.length, "Step index out of range");
-        steps[stepIndex].supervisor = supervisor;
+    function initializeSteps(Process storage process) internal {
+        process.steps.push(Step("Raccolta", address(0), false, 0, 0, "", process.lotNumber));
+        process.steps.push(Step("Trasporto", address(0), false, 0, 0, "", process.lotNumber));
+        process.steps.push(Step("Lavorazione", address(0), false, 0, 0, "", process.lotNumber));
+        process.steps.push(Step("Confezionamento", address(0), false, 0, 0, "", process.lotNumber));
+        process.steps.push(Step("Distribuzione", address(0), false, 0, 0, "", process.lotNumber));
+        process.currentStepIndex = 0;
     }
 
-    function completeStep(string memory _location) public {
-        require(currentStepIndex < steps.length, "All steps are already completed");
-        Step storage step = steps[currentStepIndex];
+    function assignSupervisor(uint lotNumber, uint stepIndex, address supervisor) public {
+        Process storage process = processes[lotNumber];
+        require(stepIndex < process.steps.length, "Step index out of range");
+        process.steps[stepIndex].supervisor = supervisor;
+    }
+
+    function completeStep(uint lotNumber, string memory _location) public {
+        Process storage process = processes[lotNumber];
+        require(process.currentStepIndex < process.steps.length, "All steps are already completed");
+        Step storage step = process.steps[process.currentStepIndex];
         require(msg.sender == step.supervisor, "Only assigned supervisor can complete the step");
         step.completed = true;
         step.endTime = block.timestamp;
         
-        if (currentStepIndex == 0) {
+        if (process.currentStepIndex == 0) {
             step.startTime = block.timestamp;
         } else {
-            step.startTime = steps[currentStepIndex - 1].endTime;
+            step.startTime = process.steps[process.currentStepIndex - 1].endTime;
         }
 
         require(isReasonableLocation(_location), "Location is not reasonable for this step");
 
         step.location = _location;
-        step.lotNumber = currentLotNumber;  // Assign current lot number to the step
+        step.lotNumber = process.lotNumber;
 
-        completedSteps.push(step);
+        emit StepCompleted(process.lotNumber, process.currentStepIndex, step.name, step.startTime, step.endTime);
+        process.currentStepIndex++;
 
-        emit StepCompleted(currentStepIndex, step.name, step.startTime, step.endTime, step.lotNumber);
-        currentStepIndex++;
-
-        if (currentStepIndex >= steps.length) {
-            resetProcess();
+        if (process.currentStepIndex >= process.steps.length) {
+            emit ProcessReset(process.lotNumber);
         }
     }
 
     function isReasonableLocation(string memory _location) internal pure returns (bool) {
-        return bytes(_location).length > 0; // Check that the location is not empty
+        return bytes(_location).length > 0;
     }
 
-    function resetProcess() internal {
-        delete steps;
-        initializeSteps();
-        currentLotNumber++;
-        emit ProcessReset(currentLotNumber);
+    function getStepsLength(uint lotNumber) public view returns (uint) {
+        return processes[lotNumber].steps.length;
     }
 
-    function getStepsLength() public view returns (uint) {
-        return steps.length;
-    }
-
-    function getStep(uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint) {
-        require(index < steps.length, "Step index out of range");
-        Step storage step = steps[index];
+    function getStep(uint lotNumber, uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint) {
+        Process storage process = processes[lotNumber];
+        require(index < process.steps.length, "Step index out of range");
+        Step storage step = process.steps[index];
         return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
     }
 
-    function getCompletedStepsLength() public view returns (uint) {
-        return completedSteps.length;
+    function isProcessCompleted(uint lotNumber) public view returns (bool) {
+        Process storage process = processes[lotNumber];
+        return process.currentStepIndex >= process.steps.length;
     }
 
-    function getCompletedStep(uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint) {
-        require(index < completedSteps.length, "Completed step index out of range");
-        Step storage step = completedSteps[index];
-        return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
-    }
-
-    function isProcessCompleted() public view returns (bool) {
-        return currentStepIndex >= steps.length;
-    }
-
-    function getCurrentStepIndex() public view returns (uint) {
-        return currentStepIndex;
+    function getCurrentStepIndex(uint lotNumber) public view returns (uint) {
+        return processes[lotNumber].currentStepIndex;
     }
 
     function getCurrentLotNumber() public view returns (uint) {
         return currentLotNumber;
     }
 
-    function setStepName(uint index, string memory name) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].name = name;
-    }
-
-    function setStepSupervisor(uint index, address supervisor) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].supervisor = supervisor;
-    }
-
-    function setStepLocation(uint index, string memory location) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].location = location;
-    }
-
-    function setStepCompleted(uint index, bool completed) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].completed = completed;
-    }
-
-    function setStepStartTime(uint index, uint startTime) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].startTime = startTime;
-    }
-
-    function setStepEndTime(uint index, uint endTime) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].endTime = endTime;
-    }
-
-    function setLotNumber(uint index, uint lotNumber) public {
-        require(index < steps.length, "Step index out of range");
-        steps[index].lotNumber = lotNumber;
-    }
-
-    /**
-     * @notice Retrieves all completed steps for a given lot number.
-     * @param lotNumber The lot number to filter completed steps by.
-     * @return An array of completed steps for the given lot number.
-     */
     function getLot(uint lotNumber) public view returns (Step[] memory) {
+        Process storage process = processes[lotNumber];
         uint count = 0;
-        for (uint i = 0; i < completedSteps.length; i++) {
-            if (completedSteps[i].lotNumber == lotNumber) {
+        for (uint i = 0; i < process.steps.length; i++) {
+            if (process.steps[i].completed) {
                 count++;
             }
         }
 
         Step[] memory lotSteps = new Step[](count);
         uint index = 0;
-        for (uint i = 0; i < completedSteps.length; i++) {
-            if (completedSteps[i].lotNumber == lotNumber) {
-                lotSteps[index] = completedSteps[i];
+        for (uint i = 0; i < process.steps.length; i++) {
+            if (process.steps[i].completed) {
+                lotSteps[index] = process.steps[i];
                 index++;
             }
         }
