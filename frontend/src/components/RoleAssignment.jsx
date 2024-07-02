@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TextInput, Button, Select, Table } from '@mantine/core';
-import { toast } from 'react-toastify';
+import { TextInput, Button, Select, Table, Card, Grid } from '@mantine/core';
 import 'react-toastify/dist/ReactToastify.css';
 
 const RoleAssignment = ({ contract, account }) => {
@@ -8,6 +7,16 @@ const RoleAssignment = ({ contract, account }) => {
   const [role, setRole] = useState('');
   const [assignedRoles, setAssignedRoles] = useState([]);
   const [removeAddress, setRemoveAddress] = useState('');
+  const [assignError, setAssignError] = useState('');
+  const [removeError, setRemoveError] = useState('');
+
+  const handleAddressFocus = () => {
+    setAssignError('');
+  };
+
+  const handleRemoveAddressFocus = () => {
+    setRemoveError('');
+  };
 
   useEffect(() => {
     const fetchAssignedRoles = async () => {
@@ -19,7 +28,8 @@ const RoleAssignment = ({ contract, account }) => {
         }));
         setAssignedRoles(roles.filter(role => role.role !== '0')); // Filtra gli account con ruolo 'None'
       } catch (error) {
-        toast.error("Errore durante il recupero dei ruoli assegnati: " + error.message);
+        setAssignError("Errore durante il recupero dei ruoli assegnati");
+        toast.error(error.message);
       }
     };
 
@@ -28,26 +38,26 @@ const RoleAssignment = ({ contract, account }) => {
 
   const assignRole = async () => {
     try {
-      const currentRole = await contract.methods.roles(address).call();
+      const currentRole = (await contract.methods.roles(address).call()).toString();
       if (currentRole === role) {
-        toast.error("L'account ha già questo ruolo");
+        setAssignError("L'utente ha già questo ruolo");
         return;
       }
       const adminCount = assignedRoles.filter(role => role.role === '1').length;
       const isLastAdmin = currentRole === '1' && adminCount === 1;
       if (isLastAdmin) {
-        toast.error("Non puoi cambiare il ruolo dell'ultimo admin");
+        setAssignError("Non puoi cambiare il ruolo dell'ultimo admin");
         return;
       }
       await contract.methods.assignRole(address, role).send({ from: account });
-      toast.success('Ruolo assegnato con successo');
       setAssignedRoles((prevRoles) => {
         const updatedRoles = prevRoles.filter((assignedRole) => assignedRole.account !== address);
         updatedRoles.push({ account: address, role });
         return updatedRoles;
       });
     } catch (error) {
-      toast.error("Errore durante l'assegnazione del ruolo: " + error.message);
+      setAssignError("Errore durante l'assegnazione del ruolo");
+      toast.error(error.message);
     }
   };
 
@@ -57,50 +67,69 @@ const RoleAssignment = ({ contract, account }) => {
       const isLastAdmin = assignedRoles.some(role => role.account === removeAddress && role.role === '1') && adminCount === 1;
 
       if (isLastAdmin) {
-        toast.error("Non puoi rimuovere l'ultimo admin rimasto");
+        setRemoveError("Non puoi rimuovere l'ultimo admin rimasto");
         return;
       }
 
       await contract.methods.removeRole(removeAddress).send({ from: account });
-      toast.success('Ruolo rimosso con successo');
       setAssignedRoles((prevRoles) => prevRoles.filter((assignedRole) => assignedRole.account !== removeAddress));
     } catch (error) {
-      toast.error("Errore durante la rimozione del ruolo: " + error.message);
+      setRemoveError("Errore durante la rimozione del ruolo");
+      toast.error(error.message);
     }
   };
 
   return (
     <div>
-      <div>
-        <TextInput
-          label="Indirizzo"
-          placeholder="Indirizzo dell'account"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
-        <Select
-          label="Ruolo"
-          placeholder="Seleziona un ruolo"
-          data={[
-            { value: '1', label: 'Admin' },
-            { value: '2', label: 'Supervisor' },
-            { value: '3', label: 'Operator' },
-          ]}
-          value={role}
-          onChange={setRole}
-        />
-        <Button onClick={assignRole}>Assegna Ruolo</Button>
-      </div>
-
-      <div>
-        <TextInput
-          label="Indirizzo per rimuovere il ruolo"
-          placeholder="Indirizzo dell'account"
-          value={removeAddress}
-          onChange={(e) => setRemoveAddress(e.target.value)}
-        />
-        <Button onClick={removeRole} color="red">Rimuovi Ruolo</Button>
-      </div>
+      <Grid gutter="lg">
+        <Grid.Col span={6}>
+          <Card shadow="sm" padding="lg" style={{ padding: '20px', marginRight: '20px' }}>
+            <div style={{ padding: '5px 0' }}>
+              <TextInput
+                label="Indirizzo"
+                placeholder="Indirizzo dell'account"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onFocus={handleAddressFocus}
+              />
+            </div>
+            <div style={{ padding: '5px 0' }}>
+              <Select
+                label="Ruolo"
+                placeholder="Seleziona un ruolo"
+                data={[
+                  { value: '1', label: 'Admin' },
+                  { value: '2', label: 'Supervisor' },
+                  { value: '3', label: 'Operator' },
+                ]}
+                value={role}
+                onChange={setRole}
+              />
+            </div>
+            {assignError && <p style={{ color: 'red' }}>{assignError}</p>}
+            <div style={{ padding: '5px 0' }}>
+              <Button onClick={assignRole}>Assegna Ruolo</Button>
+            </div>
+          </Card>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <Card shadow="sm" padding="lg" style={{ padding: '20px' }}>
+            <div style={{ padding: '10px 0' }}>
+              <TextInput
+                label="Indirizzo per rimuovere il ruolo"
+                placeholder="Indirizzo dell'account"
+                value={removeAddress}
+                onChange={(e) => setRemoveAddress(e.target.value)}
+                onFocus={handleRemoveAddressFocus}
+              />
+            </div>
+            {removeError && <p style={{ color: 'red' }}>{removeError}</p>}
+            <div style={{ padding: '5px 0' }}>
+              <Button onClick={removeRole} color="red">Rimuovi Ruolo</Button>
+            </div>
+          </Card>
+        </Grid.Col>
+      </Grid>
 
       <Table>
         <thead>
