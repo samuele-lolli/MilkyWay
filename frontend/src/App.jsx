@@ -7,6 +7,9 @@ import SplashScreen from './components/SplashScreen';
 import RoleAssignment from './components/RoleAssignment';
 import { Title, Tabs, rem, Button } from '@mantine/core';
 import { IconSearch, IconHistory, IconUser } from '@tabler/icons-react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -30,6 +33,13 @@ const App = () => {
         setWeb3(web3);
         setAccount(accounts[0]);
         setContract(contract);
+        console.log("UEUE")
+        const isAuthorized = await checkUserRole(contract, accounts[0]);
+        if (!isAuthorized) {
+          alert("Accesso non autorizzato. Solo utenti con ruoli definiti possono accedere.");
+          return;
+        }
+
         await updateState(contract);
         const userRole = await contract.methods.roles(accounts[0]).call();
         setRole(userRole.toString());
@@ -54,19 +64,47 @@ const App = () => {
     };
   }, []);
 
-  const handleAccountsChanged = (accounts) => {
+  const checkUserRole = async (contract, account) => {
+    const userRole = await contract.methods.roles(account).call();
+    console.log(userRole)
+    return String(userRole) !== '0'; // Assumendo che '0' sia il ruolo per utenti non autorizzati
+  };
+
+  const handleAccountsChanged = async (accounts) => {
     if (accounts.length === 0) {
       setAccount(null);
       setLoading(true);
     } else {
-      setAccount(accounts[0]);
-      setLoading(false);
+      await initializeContractAndAccount(accounts[0]);
     }
   };
 
   const handleDisconnect = () => {
     setAccount(null);
     setLoading(true);
+  };
+
+  const initializeContractAndAccount = async (account) => {
+    try {
+      const web3 = await getWeb3();
+      const contract = await getContract(web3);
+      setWeb3(web3);
+      setContract(contract);
+
+      const isAuthorized = await checkUserRole(contract, account);
+      if (!isAuthorized) {
+        alert("Accesso non autorizzato. Solo utenti con ruoli definiti possono accedere.");
+        return;
+      }
+
+      setAccount(account);
+      await updateState(contract);
+      const userRole = await contract.methods.roles(account).call();
+      setRole(userRole.toString());
+      setLoading(false);
+    } catch (error) {
+      console.error("Error initializing contract and account:", error);
+    }
   };
 
   const updateState = async (contract) => {
@@ -120,6 +158,7 @@ const App = () => {
 
   return (
     <div id='app-container'>
+       <ToastContainer />
       <Title order={1} weight={700}>Milk Supply Chain</Title>
       {role === '1' && ( // Mostra il pulsante solo se l'utente è un admin
         <Button onClick={createNewProcess}>Crea Nuovo Processo</Button>

@@ -114,7 +114,7 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
                     placeholder="Location (e.g., address or coordinates)"
                     value={locationInputs[index] || ''}
                     onChange={(e) => handleLocationChange(e, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index, 'location')}
+                    onKeyDown={(e) => handleKeyPress(e, index, 'location')}
                     disabled={step[1] === '0x0000000000000000000000000000000000000000'}
                     styles={{ input: inputStyles }}
                   />
