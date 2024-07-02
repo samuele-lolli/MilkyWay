@@ -5,8 +5,8 @@ import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';
 import SplashScreen from './components/SplashScreen';
 import RoleAssignment from './components/RoleAssignment';
-import { Title, Tabs, rem, Button } from '@mantine/core';
-import { IconSearch, IconHistory, IconUser } from '@tabler/icons-react';
+import { Title, Tabs, rem, Button, NumberInput, Group } from '@mantine/core';
+import { IconSearch, IconHistory, IconUser, IconList } from '@tabler/icons-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -20,6 +20,7 @@ const App = () => {
   const [filteredSteps, setFilteredSteps] = useState([]);
   const [completedProcesses, setCompletedProcesses] = useState([]);
   const [role, setRole] = useState(null);
+  const [newProcessCount, setNewProcessCount] = useState(1);
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
   const tabStyle = { padding: `${rem(12)} ${rem(18)}` };
 
@@ -144,15 +145,17 @@ const App = () => {
     }
   };
 
-  const createNewProcess = async () => {
+  const createNewProcesses = async () => {
     try {
-      await contract.methods.createNewProcess().send({ from: account });
+      for (let i = 0; i < newProcessCount; i++) {
+        await contract.methods.createNewProcess().send({ from: account });
+      }
       await updateState(contract);
       const userRole = await contract.methods.roles(account).call();
       setRole(userRole.toString());
-      toast.success("Nuovo processo creato con successo");
+      toast.success(`Creati ${newProcessCount} nuovi processi`);
     } catch (error) {
-      toast.error("Errore durante la creazione del nuovo processo: " + error.message);
+      toast.error("Errore durante la creazione dei nuovi processi: " + error.message);
     }
   };
 
@@ -164,37 +167,52 @@ const App = () => {
     <div id='app-container'>
       <ToastContainer />
       <Title order={1} weight={700}>Milk Supply Chain</Title>
-      {role === '1' && ( // Mostra il pulsante solo se l'utente è un admin
-        <Button onClick={createNewProcess}>Crea Nuovo Processo</Button>
+      {role === '1' && (
+        <Group align="flex-end">
+          <NumberInput
+            value={newProcessCount}
+            onChange={(value) => setNewProcessCount(value)}
+            min={1}
+            max={100}
+            style={{ maxWidth: '60px' }}
+          />
+          <Button onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
+        </Group>
       )}
-      {processes.map((process) => (
-        <ActiveSteps
-          key={process.lotNumber}
-          web3={web3}
-          contract={contract}
-          account={account}
-          steps={process.steps}
-          currentStepIndex={process.currentStepIndex}
-          lotNumber={process.lotNumber}
-          updateState={updateState}
-          role={role}
-        />
-      ))}
 
-      <Tabs variant="pills" radius="md" defaultValue="search">
+      <Tabs variant="pills" radius="md" defaultValue="active">
         <Tabs.List>
+          <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={tabStyle}>
+            <Title order={6}>Processi Attivi</Title>
+          </Tabs.Tab>
           <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={tabStyle}>
             <Title order={6}>Ricerca</Title>
           </Tabs.Tab>
           <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={tabStyle}>
             <Title order={6}>Storico</Title>
           </Tabs.Tab>
-          {role === '1' && ( // Mostra la tab solo se l'utente è un admin
+          {role === '1' && (
             <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
               <Title order={6}>Assegna Ruoli</Title>
             </Tabs.Tab>
           )}
         </Tabs.List>
+
+        <Tabs.Panel value="active">
+          {processes.map((process) => (
+            <ActiveSteps
+              key={process.lotNumber}
+              web3={web3}
+              contract={contract}
+              account={account}
+              steps={process.steps}
+              currentStepIndex={process.currentStepIndex}
+              lotNumber={process.lotNumber}
+              updateState={updateState}
+              role={role}
+            />
+          ))}
+        </Tabs.Panel>
 
         <Tabs.Panel value="search">
           <SearchByLotNumber
@@ -212,7 +230,7 @@ const App = () => {
           />
         </Tabs.Panel>
 
-        {role === '1' && ( // Mostra il pannello solo se l'utente è un admin
+        {role === '1' && (
           <Tabs.Panel value="roles">
             <RoleAssignment contract={contract} account={account} />
           </Tabs.Panel>
