@@ -4,8 +4,9 @@ import SearchByLotNumber from './components/SearchByLotNumber';
 import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';
 import SplashScreen from './components/SplashScreen';
+import RoleAssignment from './components/RoleAssignment';
 import { Title, Tabs, rem, Button } from '@mantine/core';
-import { IconSearch, IconHistory } from '@tabler/icons-react';
+import { IconSearch, IconHistory, IconUser } from '@tabler/icons-react';
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -16,6 +17,7 @@ const App = () => {
   const [searchLotNumber, setSearchLotNumber] = useState('');
   const [filteredSteps, setFilteredSteps] = useState([]);
   const [completedProcesses, setCompletedProcesses] = useState([]);
+  const [role, setRole] = useState(null);
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
   const tabStyle = { padding: `${rem(12)} ${rem(18)}` };
 
@@ -29,6 +31,8 @@ const App = () => {
         setAccount(accounts[0]);
         setContract(contract);
         await updateState(contract);
+        const userRole = await contract.methods.roles(accounts[0]).call();
+        setRole(userRole.toString());
         setLoading(false);
       } catch (error) {
         console.error("Error initializing web3, accounts, or contract:", error);
@@ -103,6 +107,8 @@ const App = () => {
     try {
       await contract.methods.createNewProcess().send({ from: account });
       await updateState(contract);
+      const userRole = await contract.methods.roles(account).call();
+      setRole(userRole.toString());
     } catch (error) {
       console.error("Error creating new process:", error);
     }
@@ -115,7 +121,9 @@ const App = () => {
   return (
     <div id='app-container'>
       <Title order={1} weight={700}>Milk Supply Chain</Title>
-      <Button onClick={createNewProcess}>Crea Nuovo Processo</Button>
+      {role === '1' && ( // Mostra il pulsante solo se l'utente è un admin
+        <Button onClick={createNewProcess}>Crea Nuovo Processo</Button>
+      )}
       {processes.map((process) => (
         <ActiveSteps
           key={process.lotNumber}
@@ -137,6 +145,11 @@ const App = () => {
           <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={tabStyle}>
             <Title order={6}>Storico</Title>
           </Tabs.Tab>
+          {role === '1' && ( // Mostra la tab solo se l'utente è un admin
+            <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
+              <Title order={6}>Assegna Ruoli</Title>
+            </Tabs.Tab>
+          )}
         </Tabs.List>
 
         <Tabs.Panel value="search">
@@ -154,7 +167,12 @@ const App = () => {
             completedSteps={completedProcesses.flatMap(p => p.steps.filter(s => s[2]))}
           />
         </Tabs.Panel>
-        
+
+        {role === '1' && ( // Mostra il pannello solo se l'utente è un admin
+          <Tabs.Panel value="roles">
+            <RoleAssignment contract={contract} account={account} />
+          </Tabs.Panel>
+        )}
       </Tabs>
     </div>
   );

@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 contract MilkChain {
+
+    enum Role { None, Admin, Supervisor, Operator }
+
     struct Step {
         string name;
         address supervisor;
@@ -19,16 +22,44 @@ contract MilkChain {
     }
 
     mapping(uint => Process) public processes;
+    mapping(address => Role) public roles;
+    mapping(address => bool) private allAccounts;
+    address[] private accountList;
     uint public currentLotNumber;
+    address public owner;
 
     event StepCompleted(uint lotNumber, uint stepIndex, string name, uint startTime, uint endTime);
     event ProcessReset(uint newLotNumber);
+    event RoleAssigned(address indexed account, Role role);
 
-    constructor() {
-        currentLotNumber = 1; 
+    modifier onlyAdmin() {
+        require(roles[msg.sender] == Role.Admin, "Only admin can perform this action");
+        _;
     }
 
-    function createNewProcess() public {
+    modifier onlySupervisor() {
+        require(roles[msg.sender] == Role.Supervisor, "Only supervisor can perform this action");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        roles[owner] = Role.Admin;
+        currentLotNumber = 1; 
+        allAccounts[owner] = true;
+        accountList.push(owner);
+    }
+
+    function assignRole(address account, Role role) public onlyAdmin {
+        roles[account] = role;
+        if (!allAccounts[account]) {
+            allAccounts[account] = true;
+            accountList.push(account);
+        }
+        emit RoleAssigned(account, role);
+    }
+
+    function createNewProcess() public onlyAdmin {
         Process storage newProcess = processes[currentLotNumber];
         newProcess.lotNumber = currentLotNumber;
         initializeSteps(newProcess);
@@ -44,13 +75,13 @@ contract MilkChain {
         process.currentStepIndex = 0;
     }
 
-    function assignSupervisor(uint lotNumber, uint stepIndex, address supervisor) public {
+    function assignSupervisor(uint lotNumber, uint stepIndex, address supervisor) public onlyAdmin {
         Process storage process = processes[lotNumber];
         require(stepIndex < process.steps.length, "Step index out of range");
         process.steps[stepIndex].supervisor = supervisor;
     }
 
-    function completeStep(uint lotNumber, string memory _location) public {
+    function completeStep(uint lotNumber, string memory _location) public onlySupervisor {
         Process storage process = processes[lotNumber];
         require(process.currentStepIndex < process.steps.length, "All steps are already completed");
         Step storage step = process.steps[process.currentStepIndex];
@@ -123,5 +154,9 @@ contract MilkChain {
             }
         }
         return lotSteps;
+    }
+
+    function getAllAccounts() public view returns (address[] memory) {
+        return accountList;
     }
 }

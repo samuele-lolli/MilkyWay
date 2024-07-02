@@ -22,6 +22,10 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
       if (!web3.utils.isAddress(supervisorAddress)) {
         throw new Error("Invalid supervisor address");
       }
+      const supervisorRole = await contract.methods.roles(supervisorAddress).call();
+      if (supervisorRole.toString() !== '2') { // Verifica che il ruolo sia Supervisor
+        throw new Error("The address does not have a Supervisor role");
+      }
       await contract.methods.assignSupervisor(lotNumber, index, supervisorAddress).send({ from: account });
       await updateState(contract);
       const newSupervisorErrors = [...supervisorErrors];
@@ -59,9 +63,6 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
     const newAddresses = [...supervisorAddresses];
     newAddresses[index] = e.target.value;
     setSupervisorAddresses(newAddresses);
-    const newSupervisorErrors = [...supervisorErrors];
-    newSupervisorErrors[index] = '';
-    setSupervisorErrors(newSupervisorErrors);
   };
 
   const handleLocationChange = (e, index) => {
