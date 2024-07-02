@@ -7,6 +7,7 @@ const RoleAssignment = ({ contract, account }) => {
   const [address, setAddress] = useState('');
   const [role, setRole] = useState('');
   const [assignedRoles, setAssignedRoles] = useState([]);
+  const [removeAddress, setRemoveAddress] = useState('');
 
   useEffect(() => {
     const fetchAssignedRoles = async () => {
@@ -16,7 +17,7 @@ const RoleAssignment = ({ contract, account }) => {
           const role = await contract.methods.roles(acc).call();
           return { account: acc, role: role.toString() };
         }));
-        setAssignedRoles(roles);
+        setAssignedRoles(roles.filter(role => role.role !== '0')); // Filtra gli account con ruolo 'None'
       } catch (error) {
         toast.error("Errore durante il recupero dei ruoli assegnati: " + error.message);
       }
@@ -27,15 +28,22 @@ const RoleAssignment = ({ contract, account }) => {
 
   const assignRole = async () => {
     try {
+      const currentRole = await contract.methods.roles(address).call();
+      if (currentRole === role) {
+        toast.error("L'account ha già questo ruolo");
+        return;
+      }
+      const adminCount = assignedRoles.filter(role => role.role === '1').length;
+      const isLastAdmin = currentRole === '1' && adminCount === 1;
+      if (isLastAdmin) {
+        toast.error("Non puoi cambiare il ruolo dell'ultimo admin");
+        return;
+      }
       await contract.methods.assignRole(address, role).send({ from: account });
       toast.success('Ruolo assegnato con successo');
       setAssignedRoles((prevRoles) => {
-        const updatedRoles = prevRoles.map((assignedRole) =>
-          assignedRole.account === address ? { account: address, role } : assignedRole
-        );
-        if (!updatedRoles.some((assignedRole) => assignedRole.account === address)) {
-          updatedRoles.push({ account: address, role });
-        }
+        const updatedRoles = prevRoles.filter((assignedRole) => assignedRole.account !== address);
+        updatedRoles.push({ account: address, role });
         return updatedRoles;
       });
     } catch (error) {
@@ -43,26 +51,56 @@ const RoleAssignment = ({ contract, account }) => {
     }
   };
 
+  const removeRole = async () => {
+    try {
+      const adminCount = assignedRoles.filter(role => role.role === '1').length;
+      const isLastAdmin = assignedRoles.some(role => role.account === removeAddress && role.role === '1') && adminCount === 1;
+
+      if (isLastAdmin) {
+        toast.error("Non puoi rimuovere l'ultimo admin rimasto");
+        return;
+      }
+
+      await contract.methods.removeRole(removeAddress).send({ from: account });
+      toast.success('Ruolo rimosso con successo');
+      setAssignedRoles((prevRoles) => prevRoles.filter((assignedRole) => assignedRole.account !== removeAddress));
+    } catch (error) {
+      toast.error("Errore durante la rimozione del ruolo: " + error.message);
+    }
+  };
+
   return (
     <div>
-      <TextInput
-        label="Indirizzo"
-        placeholder="Indirizzo dell'account"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-      />
-      <Select
-        label="Ruolo"
-        placeholder="Seleziona un ruolo"
-        data={[
-          { value: '1', label: 'Admin' },
-          { value: '2', label: 'Supervisor' },
-          { value: '3', label: 'Operator' },
-        ]}
-        value={role}
-        onChange={setRole}
-      />
-      <Button onClick={assignRole}>Assegna Ruolo</Button>
+      <div>
+        <TextInput
+          label="Indirizzo"
+          placeholder="Indirizzo dell'account"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+        <Select
+          label="Ruolo"
+          placeholder="Seleziona un ruolo"
+          data={[
+            { value: '1', label: 'Admin' },
+            { value: '2', label: 'Supervisor' },
+            { value: '3', label: 'Operator' },
+          ]}
+          value={role}
+          onChange={setRole}
+        />
+        <Button onClick={assignRole}>Assegna Ruolo</Button>
+      </div>
+
+      <div>
+        <TextInput
+          label="Indirizzo per rimuovere il ruolo"
+          placeholder="Indirizzo dell'account"
+          value={removeAddress}
+          onChange={(e) => setRemoveAddress(e.target.value)}
+        />
+        <Button onClick={removeRole} color="red">Rimuovi Ruolo</Button>
+      </div>
 
       <Table>
         <thead>
