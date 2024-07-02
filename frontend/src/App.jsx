@@ -10,7 +10,6 @@ import { IconSearch, IconHistory, IconUser } from '@tabler/icons-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
 const App = () => {
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
@@ -33,19 +32,17 @@ const App = () => {
         setWeb3(web3);
         setAccount(accounts[0]);
         setContract(contract);
-        console.log("UEUE")
         const isAuthorized = await checkUserRole(contract, accounts[0]);
         if (!isAuthorized) {
-          alert("Accesso non autorizzato. Solo utenti con ruoli definiti possono accedere.");
+          toast.error("Non sei autorizzato");
           return;
         }
-
         await updateState(contract);
         const userRole = await contract.methods.roles(accounts[0]).call();
         setRole(userRole.toString());
         setLoading(false);
       } catch (error) {
-        console.error("Error initializing web3, accounts, or contract:", error);
+        toast.error("Errore durante l'inizializzazione di web3, accounts o contract: " + error.message);
       }
     };
 
@@ -66,8 +63,10 @@ const App = () => {
 
   const checkUserRole = async (contract, account) => {
     const userRole = await contract.methods.roles(account).call();
-    console.log(userRole)
-    return String(userRole) !== '0'; // Assumendo che '0' sia il ruolo per utenti non autorizzati
+    if (String(userRole) === '0') {
+      return false;
+    }
+    return true;
   };
 
   const handleAccountsChanged = async (accounts) => {
@@ -93,7 +92,7 @@ const App = () => {
 
       const isAuthorized = await checkUserRole(contract, account);
       if (!isAuthorized) {
-        alert("Accesso non autorizzato. Solo utenti con ruoli definiti possono accedere.");
+        toast.error("Non sei autorizzato");
         return;
       }
 
@@ -103,27 +102,31 @@ const App = () => {
       setRole(userRole.toString());
       setLoading(false);
     } catch (error) {
-      console.error("Error initializing contract and account:", error);
+      toast.error("Errore durante l'inizializzazione del contract e dell'account: " + error.message);
     }
   };
 
   const updateState = async (contract) => {
-    const lotNumber = await contract.methods.getCurrentLotNumber().call();
-    const activeProcesses = [];
-    const completedProcesses = [];
-    for (let i = 1; i <= lotNumber; i++) {
-      const steps = await fetchSteps(contract, i);
-      const currentStepIndex = await contract.methods.getCurrentStepIndex(i).call();
-      const isCompleted = await contract.methods.isProcessCompleted(i).call();
-      const process = { lotNumber: i, steps, currentStepIndex: parseInt(currentStepIndex) };
-      if (isCompleted) {
-        completedProcesses.push(process);
-      } else {
-        activeProcesses.push(process);
+    try {
+      const lotNumber = await contract.methods.getCurrentLotNumber().call();
+      const activeProcesses = [];
+      const completedProcesses = [];
+      for (let i = 1; i <= lotNumber; i++) {
+        const steps = await fetchSteps(contract, i);
+        const currentStepIndex = await contract.methods.getCurrentStepIndex(i).call();
+        const isCompleted = await contract.methods.isProcessCompleted(i).call();
+        const process = { lotNumber: i, steps, currentStepIndex: parseInt(currentStepIndex) };
+        if (isCompleted) {
+          completedProcesses.push(process);
+        } else {
+          activeProcesses.push(process);
+        }
       }
+      setProcesses(activeProcesses);
+      setCompletedProcesses(completedProcesses);
+    } catch (error) {
+      toast.error("Errore durante l'aggiornamento dello stato: " + error.message);
     }
-    setProcesses(activeProcesses);
-    setCompletedProcesses(completedProcesses);
   };
 
   const fetchSteps = async (contract, lotNumber) => {
@@ -136,7 +139,7 @@ const App = () => {
       }
       return steps;
     } catch (error) {
-      console.error("Error fetching steps:", error);
+      toast.error("Errore durante il recupero dei passaggi: " + error.message);
       return [];
     }
   };
@@ -147,8 +150,9 @@ const App = () => {
       await updateState(contract);
       const userRole = await contract.methods.roles(account).call();
       setRole(userRole.toString());
+      toast.success("Nuovo processo creato con successo");
     } catch (error) {
-      console.error("Error creating new process:", error);
+      toast.error("Errore durante la creazione del nuovo processo: " + error.message);
     }
   };
 
@@ -158,7 +162,7 @@ const App = () => {
 
   return (
     <div id='app-container'>
-       <ToastContainer />
+      <ToastContainer />
       <Title order={1} weight={700}>Milk Supply Chain</Title>
       {role === '1' && ( // Mostra il pulsante solo se l'utente è un admin
         <Button onClick={createNewProcess}>Crea Nuovo Processo</Button>
@@ -173,6 +177,7 @@ const App = () => {
           currentStepIndex={process.currentStepIndex}
           lotNumber={process.lotNumber}
           updateState={updateState}
+          role={role}
         />
       ))}
 

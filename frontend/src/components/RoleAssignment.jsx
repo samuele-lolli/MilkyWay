@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Select, Table } from '@mantine/core';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const RoleAssignment = ({ contract, account }) => {
   const [address, setAddress] = useState('');
@@ -16,7 +18,7 @@ const RoleAssignment = ({ contract, account }) => {
         }));
         setAssignedRoles(roles);
       } catch (error) {
-        console.error("Error fetching assigned roles:", error);
+        toast.error("Errore durante il recupero dei ruoli assegnati: " + error.message);
       }
     };
 
@@ -26,24 +28,18 @@ const RoleAssignment = ({ contract, account }) => {
   const assignRole = async () => {
     try {
       await contract.methods.assignRole(address, role).send({ from: account });
-      alert('Ruolo assegnato con successo');
-  
-      // Aggiorna lo stato assignedRoles sostituendo il ruolo esistente
+      toast.success('Ruolo assegnato con successo');
       setAssignedRoles((prevRoles) => {
         const updatedRoles = prevRoles.map((assignedRole) =>
           assignedRole.account === address ? { account: address, role } : assignedRole
         );
-  
-        // Se l'indirizzo non esisteva già, aggiungilo
         if (!updatedRoles.some((assignedRole) => assignedRole.account === address)) {
           updatedRoles.push({ account: address, role });
         }
-  
         return updatedRoles;
       });
     } catch (error) {
-      console.error("Error assigning role:", error);
-      alert('Errore durante l\'assegnazione del ruolo');
+      toast.error("Errore durante l'assegnazione del ruolo: " + error.message);
     }
   };
 
