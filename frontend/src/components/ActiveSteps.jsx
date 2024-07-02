@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { Table, TextInput } from '@mantine/core';
+import { Table, TextInput, Group, NumberInput, Button } from '@mantine/core';
 import { toast } from 'react-toastify';
 
 const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumber, updateState, role }) => {

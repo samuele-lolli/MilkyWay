@@ -88,6 +88,7 @@ const RoleAssignment = ({ contract, account }) => {
               <TextInput
                 label="Indirizzo"
                 placeholder="Indirizzo dell'account"
+                radius="md" 
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 onFocus={handleAddressFocus}
@@ -97,6 +98,7 @@ const RoleAssignment = ({ contract, account }) => {
               <Select
                 label="Ruolo"
                 placeholder="Seleziona un ruolo"
+                radius="md" 
                 data={[
                   { value: '1', label: 'Admin' },
                   { value: '2', label: 'Supervisor' },
@@ -108,7 +110,7 @@ const RoleAssignment = ({ contract, account }) => {
             </div>
             {assignError && <p style={{ color: 'red' }}>{assignError}</p>}
             <div style={{ padding: '5px 0' }}>
-              <Button onClick={assignRole}>Assegna Ruolo</Button>
+              <Button radius="md" onClick={assignRole}>Assegna Ruolo</Button>
             </div>
           </Card>
         </Grid.Col>
@@ -118,6 +120,7 @@ const RoleAssignment = ({ contract, account }) => {
               <TextInput
                 label="Indirizzo per rimuovere il ruolo"
                 placeholder="Indirizzo dell'account"
+                radius="md" 
                 value={removeAddress}
                 onChange={(e) => setRemoveAddress(e.target.value)}
                 onFocus={handleRemoveAddressFocus}
@@ -125,7 +128,7 @@ const RoleAssignment = ({ contract, account }) => {
             </div>
             {removeError && <p style={{ color: 'red' }}>{removeError}</p>}
             <div style={{ padding: '5px 0' }}>
-              <Button onClick={removeRole} color="red">Rimuovi Ruolo</Button>
+              <Button radius="md" onClick={removeRole} color="red">Rimuovi Ruolo</Button>
             </div>
           </Card>
         </Grid.Col>

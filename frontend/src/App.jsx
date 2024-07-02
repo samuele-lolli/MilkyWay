@@ -22,7 +22,7 @@ const App = () => {
   const [role, setRole] = useState(null);
   const [newProcessCount, setNewProcessCount] = useState(1);
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
-  const tabStyle = { padding: `${rem(12)} ${rem(18)}` };
+  const tabStyle = { padding: `${rem(6)} ${rem(18)}` };
 
   useEffect(() => {
     const init = async () => {
@@ -110,21 +110,16 @@ const App = () => {
   const updateState = async (contract) => {
     try {
       const lotNumber = await contract.methods.getCurrentLotNumber().call();
-      const activeProcesses = [];
-      const completedProcesses = [];
+      const allProcesses = [];
       for (let i = 1; i <= lotNumber; i++) {
         const steps = await fetchSteps(contract, i);
         const currentStepIndex = await contract.methods.getCurrentStepIndex(i).call();
         const isCompleted = await contract.methods.isProcessCompleted(i).call();
-        const process = { lotNumber: i, steps, currentStepIndex: parseInt(currentStepIndex) };
-        if (isCompleted) {
-          completedProcesses.push(process);
-        } else {
-          activeProcesses.push(process);
-        }
+        const process = { lotNumber: i, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted };
+        allProcesses.push(process);
       }
-      setProcesses(activeProcesses);
-      setCompletedProcesses(completedProcesses);
+      setProcesses(allProcesses.filter(p => !p.isCompleted));
+      setCompletedProcesses(allProcesses.filter(p => p.isCompleted));
     } catch (error) {
       toast.error("Errore durante l'aggiornamento dello stato: " + error.message);
     }
@@ -167,80 +162,81 @@ const App = () => {
     <div id='app-container'>
       <ToastContainer />
       <Title order={1} weight={700}>Milk Supply Chain</Title>
-      <Tabs variant="pills" radius="md" defaultValue="active">
-        <Tabs.List>
-          <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={tabStyle}>
-            <Title order={6}>Processi Attivi</Title>
-          </Tabs.Tab>
-          <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={tabStyle}>
-            <Title order={6}>Ricerca</Title>
-          </Tabs.Tab>
-          <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={tabStyle}>
-            <Title order={6}>Storico</Title>
-          </Tabs.Tab>
-          {role === '1' && (
-            <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
-              <Title order={6}>Assegna Ruoli</Title>
+        <Tabs variant="pills" radius="lg" defaultValue="active">
+          <Tabs.List style={{ gap: '10px' }}>
+            <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+              <Title order={6}>Processi Attivi</Title>
             </Tabs.Tab>
-          )}
-        </Tabs.List>
-
-        <Tabs.Panel value="active">
-          <div style={{ marginTop: '20px' }}>
-            <h2>Active processes</h2>
+            <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+              <Title order={6}>Ricerca</Title>
+            </Tabs.Tab>
+            <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+              <Title order={6}>Storico</Title>
+            </Tabs.Tab>
             {role === '1' && (
-              <Group align="flex-end">
-                <NumberInput
-                  value={newProcessCount}
-                  onChange={(value) => setNewProcessCount(value)}
-                  min={1}
-                  max={100}
-                  style={{ maxWidth: '60px' }}
-                />
-                <Button onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
-              </Group>
+              <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
+                <Title order={6}>Assegna Ruoli</Title>
+              </Tabs.Tab>
             )}
-          </div>
-          {processes.map((process) => (
-            <ActiveSteps
-              key={process.lotNumber}
-              web3={web3}
-              contract={contract}
-              account={account}
-              steps={process.steps}
-              currentStepIndex={process.currentStepIndex}
-              lotNumber={process.lotNumber}
-              updateState={updateState}
-              role={role}
-            />
-          ))}
-        </Tabs.Panel>
+          </Tabs.List>
 
-        <Tabs.Panel value="search">
-          <h2>Search by Lot Number</h2>
-          <SearchByLotNumber
-            searchLotNumber={searchLotNumber}
-            setSearchLotNumber={setSearchLotNumber}
-            filteredSteps={filteredSteps}
-            setFilteredSteps={setFilteredSteps}
-            completedSteps={completedProcesses.flatMap(p => p.steps.filter(s => s[2]))}
-          />
-        </Tabs.Panel>
-
-        <Tabs.Panel value="history">
-          <h2>Completed Steps</h2>
-          <CompletedSteps
-            completedSteps={completedProcesses.flatMap(p => p.steps.filter(s => s[2]))}
-          />
-        </Tabs.Panel>
-
-        {role === '1' && (
-          <Tabs.Panel value="roles">
-            <h2>Roles management center</h2>
-            <RoleAssignment contract={contract} account={account} />
+          <Tabs.Panel value="active">
+            <div style={{ marginTop: '20px' }}>
+              <h2>Active processes</h2>
+              {role === '1' && (
+                <Group align="flex-end">
+                  <NumberInput
+                    value={newProcessCount}
+                    onChange={(value) => setNewProcessCount(value)}
+                    radius="md"
+                    min={1}
+                    max={100}
+                    style={{ maxWidth: '60px' }}
+                  />
+                  <Button radius="md" onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
+                </Group>
+              )}
+            </div>
+            {processes.map((process) => (
+              <ActiveSteps
+                key={process.lotNumber}
+                web3={web3}
+                contract={contract}
+                account={account}
+                steps={process.steps}
+                currentStepIndex={process.currentStepIndex}
+                lotNumber={process.lotNumber}
+                updateState={updateState}
+                role={role}
+              />
+            ))}
           </Tabs.Panel>
-        )}
-      </Tabs>
+
+          <Tabs.Panel value="search">
+            <h2>Search by Lot Number</h2>
+            <SearchByLotNumber
+              searchLotNumber={searchLotNumber}
+              setSearchLotNumber={setSearchLotNumber}
+              filteredSteps={filteredSteps}
+              setFilteredSteps={setFilteredSteps}
+              allSteps={processes.concat(completedProcesses).flatMap(p => p.steps)}
+            />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="history">
+            <h2>Storico</h2>
+            <CompletedSteps
+              allSteps={processes.concat(completedProcesses).flatMap(p => p.steps)}
+            />
+          </Tabs.Panel>
+
+          {role === '1' && (
+            <Tabs.Panel value="roles">
+              <h2>Roles management center</h2>
+              <RoleAssignment contract={contract} account={account} />
+            </Tabs.Panel>
+          )}
+        </Tabs>
     </div>
   );
 };
