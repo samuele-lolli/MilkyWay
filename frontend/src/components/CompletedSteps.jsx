@@ -19,7 +19,6 @@ const CompletedSteps = ({ completedSteps }) => {
 
     return (
         <div>
-            <h2>Completed Steps</h2>
             {lotNumbers.map((lotNumber) => (
                 <div key={lotNumber}>
                     <h3>Lotto {Number(lotNumber)}</h3>

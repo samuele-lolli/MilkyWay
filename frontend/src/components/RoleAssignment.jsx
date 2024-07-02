@@ -81,7 +81,6 @@ const RoleAssignment = ({ contract, account }) => {
 
   return (
     <div>
-    <h2>Roles management center</h2>
       <Grid gutter="lg">
         <Grid.Col span={6}>
           <Card shadow="sm" padding="lg" style={{ padding: '20px', marginRight: '20px' }}>

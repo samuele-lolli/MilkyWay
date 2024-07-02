@@ -5,7 +5,7 @@ import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';
 import SplashScreen from './components/SplashScreen';
 import RoleAssignment from './components/RoleAssignment';
-import { Title, Tabs, rem, Button, NumberInput, Group } from '@mantine/core';
+import { Title, Tabs, rem, Button, NumberInput, Group, Box } from '@mantine/core';
 import { IconSearch, IconHistory, IconUser, IconList } from '@tabler/icons-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -167,19 +167,6 @@ const App = () => {
     <div id='app-container'>
       <ToastContainer />
       <Title order={1} weight={700}>Milk Supply Chain</Title>
-      {role === '1' && (
-        <Group align="flex-end">
-          <NumberInput
-            value={newProcessCount}
-            onChange={(value) => setNewProcessCount(value)}
-            min={1}
-            max={100}
-            style={{ maxWidth: '60px' }}
-          />
-          <Button onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
-        </Group>
-      )}
-
       <Tabs variant="pills" radius="md" defaultValue="active">
         <Tabs.List>
           <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={tabStyle}>
@@ -199,6 +186,21 @@ const App = () => {
         </Tabs.List>
 
         <Tabs.Panel value="active">
+          <div style={{ marginTop: '20px' }}>
+            <h2>Active processes</h2>
+            {role === '1' && (
+              <Group align="flex-end">
+                <NumberInput
+                  value={newProcessCount}
+                  onChange={(value) => setNewProcessCount(value)}
+                  min={1}
+                  max={100}
+                  style={{ maxWidth: '60px' }}
+                />
+                <Button onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
+              </Group>
+            )}
+          </div>
           {processes.map((process) => (
             <ActiveSteps
               key={process.lotNumber}
@@ -215,6 +217,7 @@ const App = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="search">
+          <h2>Search by Lot Number</h2>
           <SearchByLotNumber
             searchLotNumber={searchLotNumber}
             setSearchLotNumber={setSearchLotNumber}
@@ -225,6 +228,7 @@ const App = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="history">
+          <h2>Completed Steps</h2>
           <CompletedSteps
             completedSteps={completedProcesses.flatMap(p => p.steps.filter(s => s[2]))}
           />
@@ -232,6 +236,7 @@ const App = () => {
 
         {role === '1' && (
           <Tabs.Panel value="roles">
+            <h2>Roles management center</h2>
             <RoleAssignment contract={contract} account={account} />
           </Tabs.Panel>
         )}

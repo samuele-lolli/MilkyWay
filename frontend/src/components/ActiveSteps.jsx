@@ -77,7 +77,6 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
   
     return (
       <div style={{ marginTop: '20px' }}>
-      <h2>Active processes</h2>
         <label>Current Lot Number: {lotNumber}</label>
         <Table>
           <thead>

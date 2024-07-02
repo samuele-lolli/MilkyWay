@@ -45,7 +45,6 @@ const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps,
 
   return (
     <div>
-      <h2>Search by Lot Number</h2>
       <div style={inputStyles.wrapper}>
         <Input
           type="text"
