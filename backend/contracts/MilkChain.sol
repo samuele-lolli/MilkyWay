@@ -22,7 +22,6 @@ contract MilkChain {
 
     mapping(uint => Process) public processes;
     mapping(address => Role) public roles;
-    mapping(address => bool) private allAccounts;
     address[] private accountList;
     uint public currentLotNumber;
     address public owner;
@@ -31,7 +30,6 @@ contract MilkChain {
         owner = msg.sender;
         roles[owner] = Role.Admin;
         currentLotNumber = 1;
-        allAccounts[owner] = true;
         accountList.push(owner);
     }
 
@@ -138,8 +136,7 @@ contract MilkChain {
         require(roles[account] != Role.Admin || countAdmins() > 1, "Non puoi cambiare il ruolo dell'ultimo admin");
         require(roles[account] != role, "Questo account ha gia questo ruolo");
         roles[account] = role;
-        if (!allAccounts[account]) {
-            allAccounts[account] = true;
+        if (!isAccountInList(account)) {
             accountList.push(account);
         }
     }
@@ -147,17 +144,10 @@ contract MilkChain {
     function removeRole(address account) public onlyAdmin {
         require(roles[account] != Role.Admin || countAdmins() > 1, "Non puoi rimuovere l'ultimo admin");
         roles[account] = Role.None;
-        allAccounts[account] = false;
-        for (uint i = 0; i < accountList.length; i++) {
-            if (accountList[i] == account) {
-                accountList[i] = accountList[accountList.length - 1];
-                accountList.pop();
-                break;
-            }
-        }
+        removeAccountFromList(account);
     }
 
-    function countAdmins() public view returns (uint) {
+     function countAdmins() internal view returns (uint) {
         uint count = 0;
         for (uint i = 0; i < accountList.length; i++) {
             if (roles[accountList[i]] == Role.Admin) {
@@ -167,7 +157,25 @@ contract MilkChain {
         return count;
     }
 
-    
+    function isAccountInList(address account) internal view returns (bool) {
+        for (uint i = 0; i < accountList.length; i++) {
+            if (accountList[i] == account) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function removeAccountFromList(address account) internal {
+        for (uint i = 0; i < accountList.length; i++) {
+            if (accountList[i] == account) {
+                accountList[i] = accountList[accountList.length - 1];
+                accountList.pop();
+                break;
+            }
+        }
+    }
+
     modifier onlyAdmin() {
         require(roles[msg.sender] == Role.Admin, "Only admin can perform this action");
         _;
