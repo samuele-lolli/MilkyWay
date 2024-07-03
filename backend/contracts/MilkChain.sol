@@ -64,10 +64,6 @@ contract MilkChain {
         step.completed = true;
         step.endTime = block.timestamp;
 
-        if (process.currentStepIndex > 0) {
-            step.startTime = process.steps[process.currentStepIndex - 1].endTime;
-        }
-
         require(isReasonableLocation(_location), "Location is not reasonable for this step");
 
         step.location = _location;
