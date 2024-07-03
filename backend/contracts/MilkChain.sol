@@ -27,61 +27,12 @@ contract MilkChain {
     uint public currentLotNumber;
     address public owner;
 
-    modifier onlyAdmin() {
-        require(roles[msg.sender] == Role.Admin, "Only admin can perform this action");
-        _;
-    }
-
-    modifier onlySupervisor() {
-        require(roles[msg.sender] == Role.Supervisor, "Only supervisor can perform this action");
-        _;
-    }
-
-    event StepCompleted(uint lotNumber, uint stepIndex, string name, uint startTime, uint endTime, string location);
-    event ProcessReset(uint newLotNumber);
-    event RoleAssigned(address indexed account, Role role);
-
-    function removeRole(address account) public onlyAdmin {
-        require(roles[account] != Role.Admin || countAdmins() > 1, "Non puoi rimuovere l'ultimo admin");
-        roles[account] = Role.None;
-        allAccounts[account] = false;
-        for (uint i = 0; i < accountList.length; i++) {
-            if (accountList[i] == account) {
-                accountList[i] = accountList[accountList.length - 1];
-                accountList.pop();
-                break;
-            }
-        }
-        emit RoleAssigned(account, Role.None);
-    }
-
-    function countAdmins() public view returns (uint) {
-        uint count = 0;
-        for (uint i = 0; i < accountList.length; i++) {
-            if (roles[accountList[i]] == Role.Admin) {
-                count++;
-            }
-        }
-        return count;
-    }
-
     constructor() {
         owner = msg.sender;
         roles[owner] = Role.Admin;
         currentLotNumber = 1;
         allAccounts[owner] = true;
         accountList.push(owner);
-    }
-
-    function assignRole(address account, Role role) public onlyAdmin {
-        require(roles[account] != Role.Admin || countAdmins() > 1, "Non puoi cambiare il ruolo dell'ultimo admin");
-        require(roles[account] != role, "Questo account ha gia questo ruolo");
-        roles[account] = role;
-        if (!allAccounts[account]) {
-            allAccounts[account] = true;
-            accountList.push(account);
-        }
-        emit RoleAssigned(account, role);
     }
 
     function createNewProcess() public onlyAdmin {
@@ -124,23 +75,10 @@ contract MilkChain {
         step.location = _location;
         step.lotNumber = process.lotNumber;
 
-        emit StepCompleted(
-            process.lotNumber,
-            process.currentStepIndex,
-            step.name,
-            step.startTime,
-            step.endTime,
-            step.location
-        );
-
         process.currentStepIndex++;
 
         if (process.currentStepIndex < process.steps.length) {
             process.steps[process.currentStepIndex].startTime = block.timestamp;
-        }
-
-        if (process.currentStepIndex >= process.steps.length) {
-            emit ProcessReset(process.lotNumber);
         }
     }
 
@@ -148,20 +86,20 @@ contract MilkChain {
         return bytes(_location).length > 0;
     }
 
+    function isProcessCompleted(uint lotNumber) public view returns (bool) {
+        Process storage process = processes[lotNumber];
+        return process.currentStepIndex >= process.steps.length;
+    }
+
     function getStepsLength(uint lotNumber) public view returns (uint) {
         return processes[lotNumber].steps.length;
     }
 
-    function getStep(uint lotNumber, uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint){
+    function getStep(uint lotNumber, uint index) public view returns (string memory, address, bool, uint, uint, string memory, uint) {
         Process storage process = processes[lotNumber];
         require(index < process.steps.length, "Step index out of range");
         Step storage step = process.steps[index];
         return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
-    }
-
-    function isProcessCompleted(uint lotNumber) public view returns (bool) {
-        Process storage process = processes[lotNumber];
-        return process.currentStepIndex >= process.steps.length;
     }
 
     function getCurrentStepIndex(uint lotNumber) public view returns (uint) {
@@ -194,5 +132,49 @@ contract MilkChain {
 
     function getAllAccounts() public view returns (address[] memory) {
         return accountList;
+    }
+
+    function assignRole(address account, Role role) public onlyAdmin {
+        require(roles[account] != Role.Admin || countAdmins() > 1, "Non puoi cambiare il ruolo dell'ultimo admin");
+        require(roles[account] != role, "Questo account ha gia questo ruolo");
+        roles[account] = role;
+        if (!allAccounts[account]) {
+            allAccounts[account] = true;
+            accountList.push(account);
+        }
+    }
+
+    function removeRole(address account) public onlyAdmin {
+        require(roles[account] != Role.Admin || countAdmins() > 1, "Non puoi rimuovere l'ultimo admin");
+        roles[account] = Role.None;
+        allAccounts[account] = false;
+        for (uint i = 0; i < accountList.length; i++) {
+            if (accountList[i] == account) {
+                accountList[i] = accountList[accountList.length - 1];
+                accountList.pop();
+                break;
+            }
+        }
+    }
+
+    function countAdmins() public view returns (uint) {
+        uint count = 0;
+        for (uint i = 0; i < accountList.length; i++) {
+            if (roles[accountList[i]] == Role.Admin) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    
+    modifier onlyAdmin() {
+        require(roles[msg.sender] == Role.Admin, "Only admin can perform this action");
+        _;
+    }
+
+    modifier onlySupervisor() {
+        require(roles[msg.sender] == Role.Supervisor, "Only supervisor can perform this action");
+        _;
     }
 }
