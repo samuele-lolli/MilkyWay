@@ -15,7 +15,7 @@ const getWeb3 = () =>
       } else if (window.web3) {
         resolve(window.web3);
       } else {
-        const provider = new Web3.providers.HttpProvider('http://192.168.1.19:7545');
+        const provider = new Web3.providers.HttpProvider('http://192.168.0.119:7545');
         const web3 = new Web3(provider);
         resolve(web3);
       }
