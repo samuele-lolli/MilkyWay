@@ -110,22 +110,7 @@ contract MilkChain {
 
     function getLot(uint lotNumber) public view returns (Step[] memory) {
         Process storage process = processes[lotNumber];
-        uint count = 0;
-        for (uint i = 0; i < process.steps.length; i++) {
-            if (process.steps[i].completed) {
-                count++;
-            }
-        }
-
-        Step[] memory lotSteps = new Step[](count);
-        uint index = 0;
-        for (uint i = 0; i < process.steps.length; i++) {
-            if (process.steps[i].completed) {
-                lotSteps[index] = process.steps[i];
-                index++;
-            }
-        }
-        return lotSteps;
+        return process.steps;
     }
 
     function getAllAccounts() public view returns (address[] memory) {
