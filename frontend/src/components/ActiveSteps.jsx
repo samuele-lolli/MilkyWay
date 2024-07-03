@@ -45,7 +45,7 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
         }
   
         const location = locationInputs[index].trim();
-        const isReasonableLocation = true; // Simulated location check
+        const isReasonableLocation = true; 
   
         if (!isReasonableLocation) {
           throw new Error("La posizione non è ragionevole per questo step");

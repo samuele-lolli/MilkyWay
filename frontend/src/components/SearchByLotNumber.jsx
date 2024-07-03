@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input, CloseButton, Table, Text, ActionIcon } from '@mantine/core';
 import { IconSearch, IconRefresh } from '@tabler/icons-react';
 import { useMantineTheme } from '@mantine/core';
 
-const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps, setFilteredSteps, allSteps }) => {
+const SearchByLotNumber = ({ allSteps }) => {
+  const [filteredSteps, setFilteredSteps] = useState([]);
+  const [searchLotNumber, setSearchLotNumber] = useState('');
+
   const theme = useMantineTheme();
 
   const handleSearch = (event) => {
@@ -31,12 +34,12 @@ const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps,
 
   const inputStyles = {
     input: {
-      borderColor: theme.colors.brand[6], // #497DAC
+      borderColor: theme.colors.brand[6],
       borderWidth: '2px',
-      maxWidth: '500px'// Spazio per il pulsante di chiusura
+      maxWidth: '500px'
     },
     wrapper: {
-      maxWidth: '500px', // Imposta la larghezza massima del contenitore wrapper
+      maxWidth: '500px',
       position: 'relative'
     }
   };
@@ -46,7 +49,7 @@ const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps,
     right: '10px',
     top: '50%',
     transform: 'translateY(-50%)',
-    zIndex: 1 // Assicurati che i pulsanti siano sopra l'input
+    zIndex: 1
   };
 
   const actionIconStyles = {
@@ -83,7 +86,7 @@ const SearchByLotNumber = ({ searchLotNumber, setSearchLotNumber, filteredSteps,
             ...inputStyles,
             input: {
               ...inputStyles.input,
-              paddingRight: '80px' // Aumentato per fare spazio al pulsante di refresh
+              paddingRight: '80px'
             }
           }}
         />

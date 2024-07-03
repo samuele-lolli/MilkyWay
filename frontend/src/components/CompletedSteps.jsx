@@ -2,6 +2,7 @@ import React from 'react';
 import { Table, Text } from '@mantine/core';
 
 const CompletedSteps = ({ allSteps }) => {
+
     const groupStepsByLot = (steps) => {
         const lots = {};
         steps.forEach((step) => {

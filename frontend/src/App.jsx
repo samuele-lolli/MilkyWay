@@ -16,11 +16,10 @@ const App = () => {
   const [contract, setContract] = useState(null);
   const [processes, setProcesses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchLotNumber, setSearchLotNumber] = useState('');
-  const [filteredSteps, setFilteredSteps] = useState([]);
   const [completedProcesses, setCompletedProcesses] = useState([]);
   const [role, setRole] = useState(null);
   const [newProcessCount, setNewProcessCount] = useState(1);
+  
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
   const tabStyle = { padding: `${rem(6)} ${rem(18)}` };
 
@@ -215,10 +214,6 @@ const App = () => {
           <Tabs.Panel value="search">
             <h2>Search by Lot Number</h2>
             <SearchByLotNumber
-              searchLotNumber={searchLotNumber}
-              setSearchLotNumber={setSearchLotNumber}
-              filteredSteps={filteredSteps}
-              setFilteredSteps={setFilteredSteps}
               allSteps={processes.concat(completedProcesses).flatMap(p => p.steps)}
             />
           </Tabs.Panel>
