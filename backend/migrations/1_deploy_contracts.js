@@ -1,5 +1,5 @@
-const MilkChain = artifacts.require("MilkChain");
+const MilkProcessFactory = artifacts.require("MilkProcessFactory");
 
 module.exports = function(deployer) {
-  deployer.deploy(MilkChain);
+  deployer.deploy(MilkProcessFactory);
 };

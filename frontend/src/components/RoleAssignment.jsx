@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button, Select, Table, Card, Grid } from '@mantine/core';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const RoleAssignment = ({ contract, account }) => {
@@ -21,10 +22,11 @@ const RoleAssignment = ({ contract, account }) => {
   useEffect(() => {
     const fetchAssignedRoles = async () => {
       try {
-        const accounts = await contract.methods.getAllAccounts().call();
-        const roles = await Promise.all(accounts.map(async (acc) => {
-          const role = await contract.methods.roles(acc).call();
-          return { account: acc, role: role.toString() };
+        const rolesData = await contract.methods.getAllRoles().call();
+        console.log(rolesData);
+        const roles = rolesData[0].map((role, index) => ({
+          account: rolesData[1][index],
+          role: role
         }));
         setAssignedRoles(roles.filter(role => role.role !== '0')); // Filtra gli account con ruolo 'None'
       } catch (error) {

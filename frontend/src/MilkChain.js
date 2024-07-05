@@ -1,5 +1,7 @@
 import Web3 from 'web3';
 import MilkChainContract from '../../backend/build/contracts/MilkChain.json';
+import MilkProcessFactory from '../../backend/build/contracts/MilkProcessFactory.json';
+import MilkProcess from '../../backend/build/contracts/MilkProcess.json';
 
 const getWeb3 = () =>
   new Promise((resolve, reject) => {
@@ -15,20 +17,27 @@ const getWeb3 = () =>
       } else if (window.web3) {
         resolve(window.web3);
       } else {
-        const provider = new Web3.providers.HttpProvider('http://192.168.0.119:7545');
+        const provider = new Web3.providers.HttpProvider('http://192.168.1.19:7545');
         const web3 = new Web3(provider);
         resolve(web3);
       }
     });
   });
+  
+  const getContract = async (web3, contractName, address = null) => {
+    const networkId = await web3.eth.net.getId();
+    const deployedNetwork = contractName === 'MilkProcessFactory' 
+      ? MilkProcessFactory.networks[networkId]
+      : MilkProcess.networks[networkId];
+    const contract = new web3.eth.Contract(
+      contractName === 'MilkProcessFactory' 
+        ? MilkProcessFactory.abi 
+        : MilkProcess.abi, 
+      address || deployedNetwork && deployedNetwork.address,
+    );
+    return contract;
+  };
 
-const getContract = async (web3) => {
-  const networkId = await web3.eth.net.getId();
-  const deployedNetwork = MilkChainContract.networks[networkId];
-  return new web3.eth.Contract(
-    MilkChainContract.abi,
-    deployedNetwork && deployedNetwork.address,
-  );
-};
+  
 
 export { getWeb3, getContract };
