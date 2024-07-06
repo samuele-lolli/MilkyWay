@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
-import { Table, TextInput, Group, NumberInput, Button } from '@mantine/core';
+import React, {useState, useEffect} from 'react';
+import { Table, TextInput } from '@mantine/core';
 import { toast } from 'react-toastify';
+import {getContract} from "../MilkChain"
 
-const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumber, updateState, role }) => {
+const ActiveSteps = ({ web3, factoryContract, processContract, account, steps, currentStepIndex, lotNumber, updateState, role }) => {
     const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
     const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   
@@ -22,12 +23,13 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
         if (!web3.utils.isAddress(supervisorAddress)) {
           throw new Error("Indirizzo del supervisore non valido");
         }
-        const supervisorRole = await contract.methods.roles(supervisorAddress).call();
+        const supervisorRole = await factoryContract.methods.getRole(supervisorAddress).call();
         if (supervisorRole.toString() !== '2') {
           throw new Error("L'indirizzo non ha un ruolo di Supervisore");
         }
-        await contract.methods.assignSupervisor(lotNumber, index, supervisorAddress).send({ from: account });
-        await updateState(contract);
+        const cntr = await getContract(web3, 'MilkProcess', processContract)
+        await cntr.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
+        await updateState();
         toast.success("Supervisore assegnato con successo");
       } catch (error) {
         toast.error(error.message);
@@ -51,8 +53,10 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
           throw new Error("La posizione non è ragionevole per questo step");
         }
   
-        await contract.methods.completeStep(lotNumber, location).send({ from: account });
-        await updateState(contract);
+        const cntr = await getContract(web3, 'MilkProcess', processContract)
+
+        await cntr.methods.completeStep(location).send({ from: account });
+        await updateState(cntr);
         toast.success("Step completato con successo");
       } catch (error) {
         toast.error(error.message);
@@ -77,7 +81,7 @@ const ActiveSteps = ({ web3, contract, account, steps, currentStepIndex, lotNumb
   
     return (
       <div style={{ marginTop: '20px' }}>
-        <label>Current Lot Number: {lotNumber}</label>
+        <label>Current Lot Number: {String(lotNumber)}</label>
         <Table>
           <thead>
             <tr>

@@ -1,35 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0; // Modificato da ^0.8.20 a ^0.8.19
+pragma solidity ^0.8.0;
 
 import "./MilkProcess.sol";
 
-/**
- * @title MilkProcessFactory
- * @dev Factory contract to create and manage MilkProcess contracts.
- */
 contract MilkProcessFactory {
-    enum Role { None, Admin, Supervisor }
+    enum Role { None, Admin, Supervisor, Operator }
 
     address[] public processes;
-    address public owner;
-    uint lotNumber = 0;
     mapping(address => Role) public roles;
     address[] public users;
-
-    event ProcessCreated(address processAddress, uint lotNumber);
+    uint lotNumber = 0;
 
     constructor() {
-        owner = msg.sender;
-        roles[owner] = Role.Admin;
-        users.push(owner);
+        roles[msg.sender] = Role.Admin;
+        users.push(msg.sender);
     }
 
-    /**
-     * @notice Crea un nuovo contratto MilkProcess.
-     * @dev Solo un utente con ruolo admin può creare nuovi processi.
-     * @param quantity La quantità di nuovi processi da creare.
-     * @return address[] Gli indirizzi dei contratti MilkProcess appena creati.
-     */
     function createNewProcess(uint quantity) external onlyAdmin returns (address[] memory) {
         address[] memory newProcesses = new address[](quantity);
         for (uint i = 0; i < quantity; i++) {
@@ -37,15 +23,10 @@ contract MilkProcessFactory {
             MilkProcess newProcess = new MilkProcess(lotNumber, msg.sender, address(this));
             processes.push(address(newProcess));
             newProcesses[i] = address(newProcess);
-            emit ProcessCreated(address(newProcess), lotNumber);
         }
         return newProcesses;
     }
 
-    /**
-     * @notice Retrieves all created process addresses.
-     * @return address[] List of process addresses.
-     */
     function getAllProcesses() external view returns (address[] memory) {
         return processes;
     }
@@ -57,6 +38,8 @@ contract MilkProcessFactory {
                 userRoles[i] = "1";
             } else if (roles[users[i]] == Role.Supervisor) {
                 userRoles[i] = "2";
+            } else if(roles[users[i]] == Role.Operator) {
+                userRoles[i] = "3";
             } else {
                 userRoles[i] = "0";
             }
@@ -78,22 +61,22 @@ contract MilkProcessFactory {
     }
 
     function countAdmins() internal view returns (uint) {
-    uint count = 0;
-    for (uint i = 0; i < users.length; i++) {
-        if (roles[users[i]] == Role.Admin) {
-            count++;
+        uint count = 0;
+        for (uint i = 0; i < users.length; i++) {
+            if (roles[users[i]] == Role.Admin) {
+                count++;
         }
     }
     return count;
     }
 
     function isAccountInList(address account) internal view returns (bool) {
-    for (uint i = 0; i < users.length; i++) {
-        if (users[i] == account) {
-            return true;
+        for (uint i = 0; i < users.length; i++) {
+            if (users[i] == account) {
+                return true;
+            }
         }
-    }
-    return false;
+        return false;
     }
 
     function removeAccountFromList(address account) internal {
@@ -106,11 +89,6 @@ contract MilkProcessFactory {
         }
     }
 
-    /**
-     * @notice Retrieves the role of a specific address.
-     * @param account The address to check.
-     * @return Role The role of the specified address.
-     */
     function getRole(address account) external view returns (Role) {
         return roles[account];
     }

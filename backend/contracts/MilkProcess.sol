@@ -45,22 +45,13 @@ contract MilkProcess {
     }
 
     function completeStep(string memory _location) external onlySupervisor {
-        require(
-            currentStepIndex < steps.length,
-            "All steps are already completed"
-        );
+        require(currentStepIndex < steps.length, "All steps are already completed");
         Step storage step = steps[currentStepIndex];
-        require(
-            msg.sender == step.supervisor,
-            "Only assigned supervisor can complete the step"
-        );
+        require(msg.sender == step.supervisor,"Only assigned supervisor can complete the step");
         step.completed = true;
         step.endTime = block.timestamp;
 
-        require(
-            isReasonableLocation(_location),
-            "Location is not reasonable for this step"
-        );
+        require(isReasonableLocation(_location), "Location is not reasonable for this step");
 
         step.location = _location;
 
@@ -83,24 +74,10 @@ contract MilkProcess {
         return currentStepIndex >= steps.length;
     }
 
-    function getStep(
-        uint index
-    )
-        external
-        view
-        returns (string memory, address, bool, uint, uint, string memory, uint)
-    {
+    function getStep(uint index) external view returns (string memory, address, bool, uint, uint, string memory, uint){
         require(index < steps.length, "Step index out of range");
         Step storage step = steps[index];
-        return (
-            step.name,
-            step.supervisor,
-            step.completed,
-            step.startTime,
-            step.endTime,
-            step.location,
-            step.lotNumber
-        );
+        return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
     }
 
     modifier onlyAdmin() {

@@ -25,90 +25,37 @@ const App = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const web3 = await getWeb3();
-        const accounts = await web3.eth.getAccounts();
-        const factoryContract = await getContract(web3, 'MilkProcessFactory');
-        setWeb3(web3);
+        const web3Instance = await getWeb3();
+        const accounts = await web3Instance.eth.getAccounts();
+        const factoryContractInstance = await getContract(web3Instance, 'MilkProcessFactory');
+        const accountRole = await factoryContractInstance.methods.getRole(accounts[0]).call();
+        setWeb3(web3Instance);
         setAccount(accounts[0]);
-        setFactoryContract(factoryContract);
-        await updateState(factoryContract);
-        checkIfAdmin(factoryContract, accounts[0]);
-        checkIfSupervisor(factoryContract, accounts[0]); // Controllo del ruolo
+        setFactoryContract(factoryContractInstance);
+        if (String(accountRole) !== '0') {
+          setRole(String(accountRole));
+        }
       } catch (error) {
         toast.error("Errore durante l'inizializzazione di web3, accounts o contract: " + error.message);
       }
     };
 
     init();
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('disconnect', handleDisconnect);
-    }
-
-    return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('disconnect', handleDisconnect);
-      }
-    };
   }, []);
 
-  const checkIfSupervisor = async (factoryContract, account) => {
-    const processAddresses = await factoryContract.methods.getAllProcesses().call();
-    for (let address of processAddresses) {
-      // const processContract = await getContract(web3, 'MilkProcess', address);
-      // const userRole = await processContract.methods.roles(account).call();
-      if (String(userRole) === '2') {
-        setRole('supervisor');
-        return true;
-      }
+  useEffect(() => {
+    if (web3 && factoryContract) {
+      updateState(factoryContract);
     }
-    return false;
-  };
+  }, [web3, factoryContract]);
 
-  const checkIfAdmin = async (factoryContract, account) => {
-    const factoryAddress = await factoryContract.methods.owner().call();
-    if (account === factoryAddress) {
-      setRole('admin');
-      return true;
-    }
-    return false;
-  };
-
-  const handleAccountsChanged = async (accounts) => {
-    if (accounts.length === 0) {
-      setAccount(null);
-    } else {
-      await initializeContractAndAccount(accounts[0]);
-    }
-  };
-
-  const handleDisconnect = () => {
-    setAccount(null);
-  };
-
-  const initializeContractAndAccount = async (account) => {
+  const updateState = async () => {
     try {
-      const web3 = await getWeb3();
-      const factoryContract = await getContract(web3, 'MilkProcessFactory');
-      setWeb3(web3);
-      setFactoryContract(factoryContract);
-
-      if (!await checkIfSupervisor(factoryContract, account) || checkIfAdmin(factoryContract, account)) {
-        toast.error("Non sei autorizzato");
-        return;
+      if (!web3) {
+        throw new Error("web3 non è stato inizializzato");
       }
-
-      setAccount(account);
-      await updateState(factoryContract);
-    } catch (error) {
-      toast.error("Errore durante l'inizializzazione del contract e dell'account: " + error.message);
-    }
-  };
-
-  const updateState = async (factoryContract) => {
-    try {
       const processAddresses = await factoryContract.methods.getAllProcesses().call();
+      console.log(processAddresses)
       const allProcesses = [];
       for (let address of processAddresses) {
         const processContract = await getContract(web3, 'MilkProcess', address);
@@ -119,6 +66,7 @@ const App = () => {
         const process = { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted };
         allProcesses.push(process);
       }
+      console.log(allProcesses)
       setProcessContracts(allProcesses.filter(p => !p.isCompleted));
       setCompletedProcesses(allProcesses.filter(p => p.isCompleted));
     } catch (error) {
@@ -129,11 +77,13 @@ const App = () => {
   const fetchSteps = async (contract) => {
     try {
       const steps = [];
-      for (let i = 0; ; i++) {
+      for (let i = 0; i<5; i++) {
         try {
+          console.log(`Fetching step ${i} from contract at address ${contract.options.address}`);
           const step = await contract.methods.getStep(i).call();
           steps.push(step);
         } catch (e) {
+          console.log(`Error fetching step ${i}:`, e);
           break;
         }
       }
@@ -156,7 +106,7 @@ const App = () => {
 
   return (
     <div>
-      {(role === 'admin' || role === 'supervisor') ? <>
+      {(role === '1' || role === '2' || role === '3') ? <>
         <div id='app-container'><ToastContainer />
           <Title order={1} weight={700}>Milk Supply Chain</Title>
           <Tabs variant="pills" radius="lg" defaultValue="active">
@@ -170,7 +120,7 @@ const App = () => {
               <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
                 <Title order={6}>Storico</Title>
               </Tabs.Tab>
-              {role === 'admin' && (
+              {role === '1' && (
                 <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
                   <Title order={6}>Assegna Ruoli</Title>
                 </Tabs.Tab>
@@ -180,7 +130,7 @@ const App = () => {
             <Tabs.Panel value="active">
               <div style={{ marginTop: '20px' }}>
                 <h2>Active processes</h2>
-                {role === 'admin' && (
+                {role === '1' && (
                   <Group align="flex-end">
                     <NumberInput
                       value={newProcessCount}
@@ -198,12 +148,13 @@ const App = () => {
                 <ActiveSteps
                   key={process.address}
                   web3={web3}
-                  contract={process.contract}
+                  factoryContract={factoryContract}
+                  processContract={process.address}
                   account={account}
                   steps={process.steps}
                   currentStepIndex={process.currentStepIndex}
                   lotNumber={process.lotNumber}
-                  updateState={() => updateState(factoryContract)}
+                  updateState={() => updateState()}
                   role={role}
                 />
               ))}
@@ -223,7 +174,7 @@ const App = () => {
               />
             </Tabs.Panel>
 
-            {role === 'admin' && (
+            {role === '1' && (
               <Tabs.Panel value="roles">
                 <h2>Roles management center</h2>
                 <RoleAssignment contract={factoryContract} account={account} />
