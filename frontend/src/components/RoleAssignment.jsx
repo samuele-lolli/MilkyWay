@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { TextInput, Button, Select, Table, Card, Grid } from '@mantine/core';
+import React, { useState, useEffect, useCallback } from 'react';
+import { TextInput, Button, Select, Table, Card, Grid, Text } from '@mantine/core';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -11,24 +11,23 @@ const RoleAssignment = ({ contract, account }) => {
   const [assignError, setAssignError] = useState('');
   const [removeError, setRemoveError] = useState('');
 
-  const handleAddressFocus = () => {
+  const handleAddressFocus = useCallback(() => {
     setAssignError('');
-  };
+  }, []);
 
-  const handleRemoveAddressFocus = () => {
+  const handleRemoveAddressFocus = useCallback(() => {
     setRemoveError('');
-  };
+  }, []);
 
   useEffect(() => {
     const fetchAssignedRoles = async () => {
       try {
         const rolesData = await contract.methods.getAllRoles().call();
-        console.log(rolesData);
         const roles = rolesData[0].map((role, index) => ({
           account: rolesData[1][index],
           role: role
         }));
-        setAssignedRoles(roles.filter(role => role.role !== '0')); // Filtra gli account con ruolo 'None'
+        setAssignedRoles(roles.filter(role => role.role !== '0'));
       } catch (error) {
         setAssignError("Errore durante il recupero dei ruoli assegnati");
         toast.error(error.message);
@@ -38,7 +37,7 @@ const RoleAssignment = ({ contract, account }) => {
     fetchAssignedRoles();
   }, [contract]);
 
-  const assignRole = async () => {
+  const assignRole = useCallback(async () => {
     try {
       const currentRole = (await contract.methods.roles(address).call()).toString();
       if (currentRole === role) {
@@ -57,13 +56,14 @@ const RoleAssignment = ({ contract, account }) => {
         updatedRoles.push({ account: address, role });
         return updatedRoles;
       });
+      toast.success("Ruolo assegnato con successo");
     } catch (error) {
       setAssignError("Errore durante l'assegnazione del ruolo");
       toast.error(error.message);
     }
-  };
+  }, [contract, account, address, role, assignedRoles]);
 
-  const removeRole = async () => {
+  const removeRole = useCallback(async () => {
     try {
       const adminCount = assignedRoles.filter(role => role.role === '1').length;
       const isLastAdmin = assignedRoles.some(role => role.account === removeAddress && role.role === '1') && adminCount === 1;
@@ -75,11 +75,18 @@ const RoleAssignment = ({ contract, account }) => {
 
       await contract.methods.removeRole(removeAddress).send({ from: account });
       setAssignedRoles((prevRoles) => prevRoles.filter((assignedRole) => assignedRole.account !== removeAddress));
+      toast.success("Ruolo rimosso con successo");
     } catch (error) {
       setRemoveError("Errore durante la rimozione del ruolo");
       toast.error(error.message);
     }
-  };
+  }, [contract, account, removeAddress, assignedRoles]);
+
+  const roleOptions = [
+    { value: '1', label: 'Admin' },
+    { value: '2', label: 'Supervisor' },
+    { value: '3', label: 'Operator' },
+  ];
 
   return (
     <div>
@@ -90,7 +97,7 @@ const RoleAssignment = ({ contract, account }) => {
               <TextInput
                 label="Indirizzo"
                 placeholder="Indirizzo dell'account"
-                radius="md" 
+                radius="md"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 onFocus={handleAddressFocus}
@@ -100,17 +107,13 @@ const RoleAssignment = ({ contract, account }) => {
               <Select
                 label="Ruolo"
                 placeholder="Seleziona un ruolo"
-                radius="md" 
-                data={[
-                  { value: '1', label: 'Admin' },
-                  { value: '2', label: 'Supervisor' },
-                  { value: '3', label: 'Operator' },
-                ]}
+                radius="md"
+                data={roleOptions}
                 value={role}
                 onChange={setRole}
               />
             </div>
-            {assignError && <p style={{ color: 'red' }}>{assignError}</p>}
+            {assignError && <Text color="red">{assignError}</Text>}
             <div style={{ padding: '5px 0' }}>
               <Button radius="md" onClick={assignRole}>Assegna Ruolo</Button>
             </div>
@@ -122,20 +125,19 @@ const RoleAssignment = ({ contract, account }) => {
               <TextInput
                 label="Indirizzo per rimuovere il ruolo"
                 placeholder="Indirizzo dell'account"
-                radius="md" 
+                radius="md"
                 value={removeAddress}
                 onChange={(e) => setRemoveAddress(e.target.value)}
                 onFocus={handleRemoveAddressFocus}
               />
             </div>
-            {removeError && <p style={{ color: 'red' }}>{removeError}</p>}
+            {removeError && <Text color="red">{removeError}</Text>}
             <div style={{ padding: '5px 0' }}>
               <Button radius="md" onClick={removeRole} color="red">Rimuovi Ruolo</Button>
             </div>
           </Card>
         </Grid.Col>
       </Grid>
-
       <Table>
         <thead>
           <tr>

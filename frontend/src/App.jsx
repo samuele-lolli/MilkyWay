@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getWeb3, getContract } from './web3.js';
 import SearchByLotNumber from './components/SearchByLotNumber';
 import CompletedSteps from './components/CompletedSteps';
@@ -49,28 +49,29 @@ const App = () => {
     }
   }, [web3, factoryContract]);
 
-  const updateState = async () => {
+  const updateState = useCallback(async () => {
     try {
       if (!web3) {
         throw new Error("web3 non è stato inizializzato");
       }
       const processAddresses = await factoryContract.methods.getAllProcesses().call();
-      const allProcesses = [];
-      for (let address of processAddresses) {
+      const allProcesses = await Promise.all(processAddresses.map(async (address) => {
         const processContract = await getContract(web3, 'MilkProcess', address);
-        const steps = await processContract.methods.getSteps().call();
-        const currentStepIndex = await processContract.methods.currentStepIndex().call();
-        const isCompleted = await processContract.methods.isProcessCompleted().call();
-        const lotNumber = await processContract.methods.lotNumber().call();
-        const process = { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted };
-        allProcesses.push(process);
-      }
+        const [steps, currentStepIndex, isCompleted, lotNumber] = await Promise.all([
+          processContract.methods.getSteps().call(),
+          processContract.methods.currentStepIndex().call(),
+          processContract.methods.isProcessCompleted().call(),
+          processContract.methods.lotNumber().call(),
+        ]);
+        return {address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted};
+      }));
+
       setProcessContracts(allProcesses.filter(p => !p.isCompleted));
       setCompletedProcesses(allProcesses.filter(p => p.isCompleted));
     } catch (error) {
       toast.error("Errore durante l'aggiornamento dello stato: " + error.message);
     }
-  };
+  }, [web3, factoryContract]);
 
   const createNewProcesses = async () => {
     try {
@@ -84,8 +85,9 @@ const App = () => {
 
   return (
     <div>
-      {(role === '1' || role === '2' || role === '3') ? <>
-        <div id='app-container'><ToastContainer />
+      {(role === '1' || role === '2' || role === '3') ? (
+        <div id='app-container'>
+          <ToastContainer />
           <Title order={1} weight={700}>Milk Supply Chain</Title>
           <Tabs variant="pills" radius="lg" defaultValue="active">
             <Tabs.List style={{ gap: '10px' }}>
@@ -131,7 +133,7 @@ const App = () => {
                   steps={process.steps}
                   currentStepIndex={process.currentStepIndex}
                   lotNumber={process.lotNumber}
-                  updateState={() => updateState()}
+                  updateState={updateState}
                   role={role}
                 />
               ))}
@@ -155,8 +157,10 @@ const App = () => {
               </Tabs.Panel>
             )}
           </Tabs>
-        </div> </> : <SplashScreen />
-      }
+        </div>
+      ) : (
+        <SplashScreen />
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, TextInput } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
@@ -14,7 +14,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
       setActualContract(cntr);
     }
     getActualContract();
-  }, []);
+  }, [web3, processContractAddress]);
 
   const handleKeyPress = async (e, index, type) => {
     if (e.key === 'Enter') {
@@ -53,7 +53,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
         throw new Error("Solo il supervisore assegnato può completare questo step");
       }
       const location = locationInputs[index].trim();
-      const isReasonableLocation = true;
+      const isReasonableLocation = true;  // Consider adding a real validation here
       if (!isReasonableLocation) {
         throw new Error("La posizione non è ragionevole per questo step");
       }
