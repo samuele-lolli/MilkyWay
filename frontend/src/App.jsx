@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getWeb3, getContract } from './MilkChain.js';
+import { getWeb3, getContract } from './web3.js';
 import SearchByLotNumber from './components/SearchByLotNumber';
 import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';

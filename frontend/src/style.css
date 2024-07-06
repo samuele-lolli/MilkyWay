@@ -1,4 +1,3 @@
-/* style.css */
 @font-face {
     font-family: 'SuperMilk';
     src: url('./assets/fonts/SuperMilk.woff') format('woff');
@@ -42,7 +41,7 @@ body {
 .splash-screen {
     display: flex;
     flex-direction: column;
-    background-image: url('./assets/bg.png'); /* Percorso relativo al file bg.png */
+    background-image: url('./assets/bg.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
@@ -53,51 +52,48 @@ body {
 }
 
 .splash-screen h1 {
-    margin-bottom: 5px; /* Riduce lo spazio sotto "Benvenuto in" */
+    margin-bottom: 5px;
     font-size: 24px;
     color: white;
 }
 
 .splash-screen h2 {
-    margin-top: 0; /* Rimuove lo spazio sopra "MILKYWAY" */
+    margin-top: 0; 
     margin-bottom: 5px; 
     font-size: 120px;
     color: white;
-    font-family: 'SuperMilk', Arial, sans-serif; /* Applica il font SuperMilk */
+    font-family: 'SuperMilk', Arial, sans-serif; 
 }
 
 .splash-screen p {
     font-size: 24px;
     color: whitesmoke;
-    margin-top: 20px; /* Aggiunge uno spazio sopra il testo del paragrafo */
+    margin-top: 20px;
 }
 
-/* Aggiungi la nuova regola qui */
 #app-container > * {
     margin: 20px;
 }
 
-/* Table styling */
 table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
-    font-size: 14px; /* Smaller font size for table */
+    font-size: 14px; 
     text-align: left;
 }
 
-/* Table header styling */
 th, td {
-    padding: 8px 10px; /* Smaller padding for table cells */
-    border: 1px solid #ddd; /* Adds a border to table cells */
+    padding: 8px 10px; 
+    border: 1px solid #ddd;
 }
 
 th {
-    background-color: #f4f4f4; /* Light grey background for table headers */
+    background-color: #f4f4f4; 
 }
 
 td {
-    background-color: #fff; /* White background for table cells */
+    background-color: #fff;
 }
 
 #app-container {

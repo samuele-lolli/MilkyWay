@@ -22,21 +22,19 @@ const getWeb3 = () =>
       }
     });
   });
-  
-  const getContract = async (web3, contractName, address = null) => {
-    const networkId = await web3.eth.net.getId();
-    const deployedNetwork = contractName === 'MilkProcessFactory' 
-      ? MilkProcessFactory.networks[networkId]
-      : MilkProcess.networks[networkId];
-    const contract = new web3.eth.Contract(
-      contractName === 'MilkProcessFactory' 
-        ? MilkProcessFactory.abi 
-        : MilkProcess.abi, 
-      address || deployedNetwork && deployedNetwork.address,
-    );
-    return contract;
-  };
 
-  
+const getContract = async (web3, contractName, address = null) => {
+  const networkId = await web3.eth.net.getId();
+  const deployedNetwork = contractName === 'MilkProcessFactory'
+    ? MilkProcessFactory.networks[networkId]
+    : MilkProcess.networks[networkId];
+  const contract = new web3.eth.Contract(
+    contractName === 'MilkProcessFactory'
+      ? MilkProcessFactory.abi
+      : MilkProcess.abi,
+    address || deployedNetwork && deployedNetwork.address,
+  );
+  return contract;
+};
 
 export { getWeb3, getContract };
