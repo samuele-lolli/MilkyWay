@@ -55,18 +55,16 @@ const App = () => {
         throw new Error("web3 non è stato inizializzato");
       }
       const processAddresses = await factoryContract.methods.getAllProcesses().call();
-      console.log(processAddresses)
       const allProcesses = [];
       for (let address of processAddresses) {
         const processContract = await getContract(web3, 'MilkProcess', address);
-        const steps = await fetchSteps(processContract);
+        const steps = await processContract.methods.getSteps().call();
         const currentStepIndex = await processContract.methods.currentStepIndex().call();
         const isCompleted = await processContract.methods.isProcessCompleted().call();
         const lotNumber = await processContract.methods.lotNumber().call();
         const process = { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted };
         allProcesses.push(process);
       }
-      console.log(allProcesses)
       setProcessContracts(allProcesses.filter(p => !p.isCompleted));
       setCompletedProcesses(allProcesses.filter(p => p.isCompleted));
     } catch (error) {
@@ -74,30 +72,10 @@ const App = () => {
     }
   };
 
-  const fetchSteps = async (contract) => {
-    try {
-      const steps = [];
-      for (let i = 0; i<5; i++) {
-        try {
-          console.log(`Fetching step ${i} from contract at address ${contract.options.address}`);
-          const step = await contract.methods.getStep(i).call();
-          steps.push(step);
-        } catch (e) {
-          console.log(`Error fetching step ${i}:`, e);
-          break;
-        }
-      }
-      return steps;
-    } catch (error) {
-      toast.error("Errore durante il recupero dei passaggi: " + error.message);
-      return [];
-    }
-  };
-
   const createNewProcesses = async () => {
     try {
       await factoryContract.methods.createNewProcess(newProcessCount).send({ from: account });
-      await updateState(factoryContract);
+      await updateState();
       toast.success(`Creati ${newProcessCount} nuovi processi`);
     } catch (error) {
       toast.error("Errore durante la creazione dei nuovi processi: " + error.message);
@@ -126,7 +104,6 @@ const App = () => {
                 </Tabs.Tab>
               )}
             </Tabs.List>
-
             <Tabs.Panel value="active">
               <div style={{ marginTop: '20px' }}>
                 <h2>Active processes</h2>
@@ -149,7 +126,7 @@ const App = () => {
                   key={process.address}
                   web3={web3}
                   factoryContract={factoryContract}
-                  processContract={process.address}
+                  processContractAddress={process.address}
                   account={account}
                   steps={process.steps}
                   currentStepIndex={process.currentStepIndex}
@@ -159,21 +136,18 @@ const App = () => {
                 />
               ))}
             </Tabs.Panel>
-
             <Tabs.Panel value="search">
               <h2>Search by Lot Number</h2>
               <SearchByLotNumber
                 allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
               />
             </Tabs.Panel>
-
             <Tabs.Panel value="history">
               <h2>Storico</h2>
               <CompletedSteps
                 allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
               />
             </Tabs.Panel>
-
             {role === '1' && (
               <Tabs.Panel value="roles">
                 <h2>Roles management center</h2>
@@ -181,10 +155,10 @@ const App = () => {
               </Tabs.Panel>
             )}
           </Tabs>
-
         </div> </> : <SplashScreen />
       }
-    </div>);
+    </div>
+  );
 };
 
 export default App;

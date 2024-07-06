@@ -20,7 +20,7 @@ contract MilkProcessFactory {
         address[] memory newProcesses = new address[](quantity);
         for (uint i = 0; i < quantity; i++) {
             lotNumber = lotNumber + 1;
-            MilkProcess newProcess = new MilkProcess(lotNumber, msg.sender, address(this));
+            MilkProcess newProcess = new MilkProcess(lotNumber, address(this));
             processes.push(address(newProcess));
             newProcesses[i] = address(newProcess);
         }
@@ -47,6 +47,10 @@ contract MilkProcessFactory {
         return (userRoles, users);
     }
 
+    function getRole(address account) external view returns (Role) {
+        return roles[account];
+    }
+
     function assignRole(address account, Role role) external onlyAdmin {
         roles[account] = role;
         if (!isAccountInList(account)) {
@@ -65,9 +69,9 @@ contract MilkProcessFactory {
         for (uint i = 0; i < users.length; i++) {
             if (roles[users[i]] == Role.Admin) {
                 count++;
+            }
         }
-    }
-    return count;
+        return count;
     }
 
     function isAccountInList(address account) internal view returns (bool) {
@@ -87,10 +91,6 @@ contract MilkProcessFactory {
                 break;
             }
         }
-    }
-
-    function getRole(address account) external view returns (Role) {
-        return roles[account];
     }
 
     modifier onlyAdmin() {

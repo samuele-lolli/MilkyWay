@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0; // Modificato da ^0.8.20 a ^0.8.19
+pragma solidity ^0.8.0;
 
 import "./MilkProcessFactory.sol";
 
@@ -17,14 +17,10 @@ contract MilkProcess {
     Step[] public steps;
     uint public currentStepIndex;
     uint public lotNumber;
-    address public owner;
     address public factory;
 
-    event StepCompleted(uint stepIndex, string location, uint endTime);
-
-    constructor(uint _lotNumber, address _owner, address _factory) {
+    constructor(uint _lotNumber, address _factory) {
         lotNumber = _lotNumber;
-        owner = _owner;
         factory = _factory;
         initializeSteps();
         steps[0].startTime = block.timestamp;
@@ -60,13 +56,9 @@ contract MilkProcess {
         if (currentStepIndex < steps.length) {
             steps[currentStepIndex].startTime = block.timestamp;
         }
-
-        emit StepCompleted(currentStepIndex - 1, _location, block.timestamp);
     }
 
-    function isReasonableLocation(
-        string memory _location
-    ) internal pure returns (bool) {
+    function isReasonableLocation(string memory _location) internal pure returns (bool) {
         return bytes(_location).length > 0;
     }
 
@@ -74,10 +66,8 @@ contract MilkProcess {
         return currentStepIndex >= steps.length;
     }
 
-    function getStep(uint index) external view returns (string memory, address, bool, uint, uint, string memory, uint){
-        require(index < steps.length, "Step index out of range");
-        Step storage step = steps[index];
-        return (step.name, step.supervisor, step.completed, step.startTime, step.endTime, step.location, step.lotNumber);
+    function getSteps() external view returns (Step[] memory){
+        return steps;
     }
 
     modifier onlyAdmin() {

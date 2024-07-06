@@ -3,7 +3,7 @@ import { Table, TextInput } from '@mantine/core';
 import { toast } from 'react-toastify';
 import {getContract} from "../MilkChain"
 
-const ActiveSteps = ({ web3, factoryContract, processContract, account, steps, currentStepIndex, lotNumber, updateState, role }) => {
+const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, updateState, role }) => {
     const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
     const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   
@@ -27,7 +27,7 @@ const ActiveSteps = ({ web3, factoryContract, processContract, account, steps, c
         if (supervisorRole.toString() !== '2') {
           throw new Error("L'indirizzo non ha un ruolo di Supervisore");
         }
-        const cntr = await getContract(web3, 'MilkProcess', processContract)
+        const cntr = await getContract(web3, 'MilkProcess', processContractAddress)
         await cntr.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
         await updateState();
         toast.success("Supervisore assegnato con successo");
@@ -53,10 +53,10 @@ const ActiveSteps = ({ web3, factoryContract, processContract, account, steps, c
           throw new Error("La posizione non è ragionevole per questo step");
         }
   
-        const cntr = await getContract(web3, 'MilkProcess', processContract)
+        const cntr = await getContract(web3, 'MilkProcess', processContractAddress)
 
         await cntr.methods.completeStep(location).send({ from: account });
-        await updateState(cntr);
+        await updateState();
         toast.success("Step completato con successo");
       } catch (error) {
         toast.error(error.message);
