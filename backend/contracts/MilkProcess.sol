@@ -12,26 +12,29 @@ contract MilkProcess {
         uint endTime;
         string location;
         uint lotNumber;
+        bool failed;
     }
 
     Step[] public steps;
     uint public currentStepIndex;
     uint public lotNumber;
     address public factory;
+    bool public isFailed;
 
     constructor(uint _lotNumber, address _factory) {
         lotNumber = _lotNumber;
         factory = _factory;
         initializeSteps();
         steps[0].startTime = block.timestamp;
+        isFailed = false;
     }
 
     function initializeSteps() internal {
-        steps.push(Step("Raccolta", address(0), false, 0, 0, "", lotNumber));
-        steps.push(Step("Trasporto", address(0), false, 0, 0, "", lotNumber));
-        steps.push(Step("Lavorazione", address(0), false, 0, 0, "", lotNumber));
-        steps.push(Step("Confezionamento", address(0), false, 0, 0, "", lotNumber));
-        steps.push(Step("Distribuzione", address(0), false, 0, 0, "", lotNumber));
+        steps.push(Step("Raccolta", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Trasporto", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Lavorazione", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Confezionamento", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Distribuzione", address(0), false, 0, 0, "", lotNumber, false));
         currentStepIndex = 0;
     }
 
@@ -56,6 +59,14 @@ contract MilkProcess {
         if (currentStepIndex < steps.length) {
             steps[currentStepIndex].startTime = block.timestamp;
         }
+    }
+
+    function failStep() external onlySupervisor {
+        require(currentStepIndex < steps.length, "All steps are already completed");
+        Step storage step = steps[currentStepIndex];
+        require(msg.sender == step.supervisor, "Only assigned supervisor can fail the step");
+        step.failed = true;
+        isFailed = true;
     }
 
     function isReasonableLocation(string memory _location) internal pure returns (bool) {

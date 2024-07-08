@@ -57,17 +57,18 @@ const App = () => {
       const processAddresses = await factoryContract.methods.getAllProcesses().call();
       const allProcesses = await Promise.all(processAddresses.map(async (address) => {
         const processContract = await getContract(web3, 'MilkProcess', address);
-        const [steps, currentStepIndex, isCompleted, lotNumber] = await Promise.all([
+        const [steps, currentStepIndex, isCompleted, isFailed, lotNumber] = await Promise.all([
           processContract.methods.getSteps().call(),
           processContract.methods.currentStepIndex().call(),
           processContract.methods.isProcessCompleted().call(),
+          processContract.methods.isFailed().call(),
           processContract.methods.lotNumber().call(),
         ]);
-        return {address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted};
+        return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed };
       }));
 
-      setProcessContracts(allProcesses.filter(p => !p.isCompleted));
-      setCompletedProcesses(allProcesses.filter(p => p.isCompleted));
+      setProcessContracts(allProcesses.filter(p => !p.isCompleted && !p.isFailed));
+      setCompletedProcesses(allProcesses.filter(p => p.isCompleted || p.isFailed));
     } catch (error) {
       toast.error("Errore durante l'aggiornamento dello stato: " + error.message);
     }

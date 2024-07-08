@@ -8,6 +8,14 @@ const CompletedSteps = ({ allSteps }) => {
   };
 
   const getLotStatus = (steps) => {
+    const isFailed = steps.some(step => step.failed);
+    console.log(steps)
+    if (isFailed) {
+      return {
+        text: 'Fallito',
+        color: 'red'
+      };
+    }
     const isCompleted = steps.every(step => step[2]);
     return {
       text: isCompleted ? 'Completato' : 'In corso',

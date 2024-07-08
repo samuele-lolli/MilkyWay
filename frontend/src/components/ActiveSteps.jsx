@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, TextInput } from '@mantine/core';
+import { Table, TextInput, Button } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
 
@@ -65,6 +65,22 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     }
   };
 
+  const failStep = async (index) => {
+    try {
+      if (steps[index][1] === '0x0000000000000000000000000000000000000000') {
+        throw new Error("Supervisore non assegnato per questo step");
+      }
+      if (steps[index][1].toLowerCase() !== account.toLowerCase()) {
+        throw new Error("Solo il supervisore assegnato può dichiarare fallito questo step");
+      }
+      await actualContract.methods.failStep().send({ from: account });
+      await updateState();
+      toast.success("Step dichiarato fallito con successo");
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const handleSupervisorChange = (e, index) => {
     const newAddresses = [...supervisorAddresses];
     newAddresses[index] = e.target.value;
@@ -87,6 +103,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
             <th>Supervisor</th>
             <th>Status</th>
             <th>Location</th>
+            {role === '2' && <th>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -123,6 +140,11 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                   />
                 ) : (
                   step[5]
+                )}
+              </td>
+              <td>
+                {role === '2' && !step[2] && (
+                  <Button color="red" onClick={() => failStep(index)}>Dichiara Fallito</Button>
                 )}
               </td>
             </tr>

@@ -14,6 +14,13 @@ const SearchByLotNumber = ({ allSteps }) => {
   };
 
   const getLotStatus = useCallback(() => {
+    const isFailed = filteredSteps.some(step => step.failed);
+    if (isFailed) {
+      return {
+        text: 'Fallito',
+        color: 'red'
+      };
+    }
     const isCompleted = filteredSteps.every(step => step[2]);
     return {
       text: isCompleted ? 'Completato' : 'In corso',
@@ -131,7 +138,7 @@ const SearchByLotNumber = ({ allSteps }) => {
                     <tr key={index}>
                       <td>{step[0]}</td>
                       <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Non assegnato' : step[1]}</td>
-                      <td>{step[2] ? 'Completato' : 'In corso'}</td>
+                      <td>{step.failed ? 'Fallito' : (step.completed ? 'Completato' : 'In corso')}</td>
                       <td>{isDateInitialized(step[3]) ? new Date(parseInt(step[3]) * 1000).toLocaleString() : 'Non iniziato'}</td>
                       <td>{isDateInitialized(step[4]) ? new Date(parseInt(step[4]) * 1000).toLocaleString() : 'Non terminato'}</td>
                       <td>{step[5]}</td>
