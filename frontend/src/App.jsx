@@ -76,10 +76,17 @@ const App = () => {
 
   const createNewProcesses = async () => {
     try {
-      await factoryContract.methods.createNewProcess(newProcessCount).send({ from: account });
+      const gasEstimate = await factoryContract.methods.createNewProcess(newProcessCount).estimateGas({ from: account });
+      console.log(`Gas stimato: ${gasEstimate}`);
+      
+      await factoryContract.methods.createNewProcess(newProcessCount).send({ 
+        from: account,
+        gas: gasEstimate
+      });
       await updateState();
       toast.success(`Creati ${newProcessCount} nuovi processi`);
     } catch (error) {
+      console.error("Errore durante la creazione dei nuovi processi:", error);
       toast.error("Errore durante la creazione dei nuovi processi: " + error.message);
     }
   };
@@ -117,7 +124,7 @@ const App = () => {
                       onChange={(value) => setNewProcessCount(value)}
                       radius="md"
                       min={1}
-                      max={100}
+                      max={3}
                       style={{ maxWidth: '60px' }}
                     />
                     <Button radius="md" onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
