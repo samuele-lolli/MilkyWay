@@ -144,7 +144,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                 )}
               </td>
               <td style={{ textAlign: 'center' }}>
-                {role === '2' && !step[2] && (
+                {role === '2' && !step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && (
                   <Button variant="light" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>
                 )}
               </td>

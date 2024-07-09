@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Table, Text } from '@mantine/core';
 
@@ -10,7 +9,6 @@ const CompletedSteps = ({ allSteps }) => {
 
   const getLotStatus = (steps) => {
     const isFailed = steps.some(step => step.failed);
-    console.log(steps)
     if (isFailed) {
       return {
         text: 'Fallito',
@@ -42,38 +40,41 @@ const CompletedSteps = ({ allSteps }) => {
 
   return (
     <div>
-      {lots.map(({ lotNumber, steps }) => (
-        <div key={lotNumber}>
-          <h3>Lotto {Number(lotNumber)}</h3>
-          <Text mb="md">
-            Stato del lotto: <Text component="span" fw={700} c={getLotStatus(steps).color}>{getLotStatus(steps).text}</Text>
-          </Text>
-          <Table>
-            <thead>
-              <tr>
-                <th>Step</th>
-                <th>Supervisor</th>
-                <th>Status</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {steps.map((step, index) => (
-                <tr key={index}>
-                  <td>{step[0]}</td>
-                  <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Non assegnato' : step[1]}</td>
-                  <td>{step[2] ? 'Completato' : 'In corso'}</td>
-                  <td>{isDateInitialized(step[3]) ? new Date(parseInt(step[3]) * 1000).toLocaleString() : 'Non iniziato'}</td>
-                  <td>{isDateInitialized(step[4]) ? new Date(parseInt(step[4]) * 1000).toLocaleString() : 'Non terminato'}</td>
-                  <td>{step[5]}</td>
+      {lots.map(({ lotNumber, steps }) => {
+        const failedIndex = steps.findIndex(step => step.failed);
+        return (
+          <div key={lotNumber}>
+            <h3>Lotto {Number(lotNumber)}</h3>
+            <Text mb="md">
+              Stato del lotto: <Text component="span" fw={700} c={getLotStatus(steps).color}>{getLotStatus(steps).text}</Text>
+            </Text>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Supervisor</th>
+                  <th>Status</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Location</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
-      ))}
+              </thead>
+              <tbody>
+                {steps.map((step, index) => (
+                  <tr key={index}>
+                    <td>{step[0]}</td>
+                    <td>{step[1] === '0x0000000000000000000000000000000000000000' ? 'Non assegnato' : step[1]}</td>
+                    <td>{failedIndex !== -1 && index > failedIndex ? '-' : (step.failed ? 'Fallito' : (step[2] ? 'Completato' : 'In corso'))}</td>
+                    <td>{isDateInitialized(step[3]) ? new Date(parseInt(step[3]) * 1000).toLocaleString() : 'Non iniziato'}</td>
+                    <td>{isDateInitialized(step[4]) ? new Date(parseInt(step[4]) * 1000).toLocaleString() : 'Non terminato'}</td>
+                    <td>{step[5]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        );
+      })}
     </div>
   );
 };
