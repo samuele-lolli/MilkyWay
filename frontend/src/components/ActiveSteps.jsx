@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, TextInput, Button } from '@mantine/core';
 import { toast } from 'react-toastify';
@@ -136,7 +135,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                     value={locationInputs[index] || ''}
                     onChange={(e) => handleLocationChange(e, index)}
                     onKeyDown={(e) => handleKeyPress(e, index, 'location')}
-                    disabled={step[1] === '0x0000000000000000000000000000000000000000' || role !== '2'}
+                    disabled={step[1] === '0x0000000000000000000000000000000000000000' || role !== '2' || steps[index][1].toLowerCase() !== account.toLowerCase()}
                     styles={{ padding: '8px' }}
                   />
                 ) : (
@@ -144,7 +143,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                 )}
               </td>
               <td style={{ textAlign: 'center' }}>
-                {role === '2' && !step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && (
+              {role === '2' && !step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
                   <Button variant="light" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>
                 )}
               </td>
