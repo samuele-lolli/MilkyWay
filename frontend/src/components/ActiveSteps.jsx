@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, TextInput, Button } from '@mantine/core';
 import { toast } from 'react-toastify';
@@ -46,13 +47,10 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   const completeStep = async (index) => {
     try {
-      if (steps.some(step => step.failed)) {
-        throw new Error("Il processo è fallito e non può essere completato");
-      }
-      if (index !== 1 && index !== 2 && steps[index][1] === '0x0000000000000000000000000000000000000000') {
+      if (steps[index][1] === '0x0000000000000000000000000000000000000000') {
         throw new Error("Supervisore non assegnato per questo step");
       }
-      if (index !== 1 && index !== 2 && steps[index][1].toLowerCase() !== account.toLowerCase()) {
+      if (steps[index][1].toLowerCase() !== account.toLowerCase()) {
         throw new Error("Solo il supervisore assegnato può completare questo step");
       }
       const location = locationInputs[index].trim();
@@ -70,13 +68,10 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   const failStep = async (index) => {
     try {
-      if (steps.some(step => step.failed)) {
-        throw new Error("Il processo è fallito e non può essere completato");
-      }
-      if (index !== 1 && index !== 2 && steps[index][1] === '0x0000000000000000000000000000000000000000') {
+      if (steps[index][1] === '0x0000000000000000000000000000000000000000') {
         throw new Error("Supervisore non assegnato per questo step");
       }
-      if (index !== 1 && index !== 2 && steps[index][1].toLowerCase() !== account.toLowerCase()) {
+      if (steps[index][1].toLowerCase() !== account.toLowerCase()) {
         throw new Error("Solo il supervisore assegnato può dichiarare fallito questo step");
       }
       await actualContract.methods.failStep().send({ from: account });
@@ -117,20 +112,18 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
             <tr key={index}>
               <td>{step[0]}</td>
               <td>
-                {index === 1 ? "Sensor 1" : index === 2 ? "Sensor 2" : (
-                  step[1] === '0x0000000000000000000000000000000000000000' ? (
-                    <TextInput
-                      radius="md"
-                      variant="unstyled"
-                      placeholder="Supervisor Address"
-                      value={supervisorAddresses[index] || ''}
-                      onChange={(e) => handleSupervisorChange(e, index)}
-                      onKeyDown={(e) => handleKeyPress(e, index, 'supervisor')}
-                      disabled={role !== '1'}
-                    />
-                  ) : (
-                    step[1]
-                  )
+                {step[1] === '0x0000000000000000000000000000000000000000' ? (
+                  <TextInput
+                    radius="md"
+                    variant="unstyled"
+                    placeholder="Supervisor Address"
+                    value={supervisorAddresses[index] || ''}
+                    onChange={(e) => handleSupervisorChange(e, index)}
+                    onKeyDown={(e) => handleKeyPress(e, index, 'supervisor')}
+                    disabled={role !== '1'}
+                  />
+                ) : (
+                  step[1]
                 )}
               </td>
               <td>{step[2] ? 'Completed' : 'Pending'}</td>
@@ -143,7 +136,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                     value={locationInputs[index] || ''}
                     onChange={(e) => handleLocationChange(e, index)}
                     onKeyDown={(e) => handleKeyPress(e, index, 'location')}
-                    disabled={step[1] === '0x0000000000000000000000000000000000000000' && index !== 1 && index !== 2 || role !== '2'}
+                    disabled={step[1] === '0x0000000000000000000000000000000000000000' || role !== '2'}
                     styles={{ padding: '8px' }}
                   />
                 ) : (
@@ -151,7 +144,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                 )}
               </td>
               <td style={{ textAlign: 'center' }}>
-                {role === '2' && !step[2] && index !== 1 && index !== 2 && (
+                {role === '2' && !step[2] && (
                   <Button variant="light" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>
                 )}
               </td>

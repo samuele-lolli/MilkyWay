@@ -38,19 +38,15 @@ contract MilkProcess {
         currentStepIndex = 0;
     }
 
-    function assignSupervisor(uint stepIndex, address supervisor) external onlyAdmin {
+    function assignSupervisor(uint stepIndex,address supervisor) external onlyAdmin {
         require(stepIndex < steps.length, "Step index out of range");
-        require(stepIndex != 1 && stepIndex != 2, "No supervisor needed for this step");
         steps[stepIndex].supervisor = supervisor;
     }
 
-    function completeStep(string memory _location) external {
-        require(!isFailed, "Il processo e'fallito e non puo' essere completato");
+    function completeStep(string memory _location) external onlySupervisor {
         require(currentStepIndex < steps.length, "All steps are already completed");
         Step storage step = steps[currentStepIndex];
-        if (currentStepIndex != 1 && currentStepIndex != 2) {
-            require(msg.sender == step.supervisor, "Only assigned supervisor can complete the step");
-        }
+        require(msg.sender == step.supervisor,"Only assigned supervisor can complete the step");
         step.completed = true;
         step.endTime = block.timestamp;
 
@@ -61,19 +57,14 @@ contract MilkProcess {
         currentStepIndex++;
 
         if (currentStepIndex < steps.length) {
-            if (currentStepIndex == 1) {
-                simulateTransportSensor();
-            }
+            steps[currentStepIndex].startTime = block.timestamp;
         }
     }
 
-    function failStep() external {
-        require(!isFailed, "Il processo e' fallito e non puo' essere completato");
+    function failStep() external onlySupervisor {
         require(currentStepIndex < steps.length, "All steps are already completed");
         Step storage step = steps[currentStepIndex];
-        if (currentStepIndex != 1 && currentStepIndex != 2) {
-            require(msg.sender == step.supervisor, "Only assigned supervisor can fail the step");
-        }
+        require(msg.sender == step.supervisor, "Only assigned supervisor can fail the step");
         step.failed = true;
         isFailed = true;
     }
@@ -86,7 +77,7 @@ contract MilkProcess {
         return currentStepIndex >= steps.length;
     }
 
-    function getSteps() external view returns (Step[] memory) {
+    function getSteps() external view returns (Step[] memory){
         return steps;
     }
 
@@ -102,45 +93,5 @@ contract MilkProcess {
         MilkProcessFactory.Role role = factoryContract.getRole(msg.sender);
         require(role == MilkProcessFactory.Role.Supervisor, "Only supervisor can perform this action");
         _;
-    }
-
-    // Funzioni per simulare i sensori
-    function simulateTransportSensor() internal {
-        uint random = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 100;
-        bool success = random < 90; // 90% di successo
-        if (success) {
-            Step storage step = steps[currentStepIndex];
-            step.completed = true;
-            step.endTime = block.timestamp;
-            step.location = "Simulated Location";
-            currentStepIndex++;
-            if (currentStepIndex < steps.length) {
-                steps[currentStepIndex].startTime = block.timestamp;
-                if (currentStepIndex == 2) {
-                    simulateProcessingSensor();
-                }
-            }
-        } else {
-            steps[currentStepIndex].failed = true;
-            isFailed = true;
-        }
-    }
-
-    function simulateProcessingSensor() internal {
-        uint random = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 100;
-        bool success = random < 90; // 90% di successo
-        if (success) {
-            Step storage step = steps[currentStepIndex];
-            step.completed = true;
-            step.endTime = block.timestamp;
-            step.location = "Simulated Location";
-            currentStepIndex++;
-            if (currentStepIndex < steps.length) {
-                steps[currentStepIndex].startTime = block.timestamp;
-            }
-        } else {
-            steps[currentStepIndex].failed = true;
-            isFailed = true;
-        }
     }
 }
