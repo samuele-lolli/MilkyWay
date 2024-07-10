@@ -59,9 +59,9 @@ contract MilkProcess {
 
         if (currentStepIndex < steps.length) {
             steps[currentStepIndex].startTime = block.timestamp;
-            if(currentStepIndex == 1){
+           /* if(currentStepIndex == 1){
                 simulateTemperatureCheck();
-            }
+            } */
         }
     }
 
@@ -72,8 +72,10 @@ contract MilkProcess {
         require(msg.sender == step.supervisor, "Only assigned supervisor can fail the step");
         step.failed = true;
         isFailed = true;
+        currentStepIndex++;
     }
-    function simulateTemperatureCheck() internal {
+    
+    /* function simulateTemperatureCheck() internal {
         require(!isFailed, "Process has already failed");
 
         Step storage step = steps[currentStepIndex];
@@ -91,6 +93,25 @@ contract MilkProcess {
                 steps[currentStepIndex].startTime = block.timestamp;
             }
         } else {
+            step.failed = true;
+            isFailed = true;
+        }
+    } */
+
+    function isTemperatureOK(bool valid) external {
+        require(!isFailed, "Process has already failed");
+
+        Step storage step = steps[currentStepIndex];
+
+        if (valid){
+            step.completed = true;
+            step.endTime = block.timestamp;
+            step.location = "Automatic Transport";
+            currentStepIndex++;
+            if (currentStepIndex < steps.length) {
+                steps[currentStepIndex].startTime = block.timestamp;
+            }
+        }else{
             step.failed = true;
             isFailed = true;
         }

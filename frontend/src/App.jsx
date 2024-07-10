@@ -73,6 +73,7 @@ const App = () => {
     } catch (error) {
       toast.error("Errore durante l'aggiornamento dello stato: " + error.message);
     }
+    console.log("Update over");
   }, [web3, factoryContract]);
 
   const createNewProcesses = async () => {
