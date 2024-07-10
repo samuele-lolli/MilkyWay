@@ -64,6 +64,7 @@ const App = () => {
           processContract.methods.isFailed().call(),
           processContract.methods.lotNumber().call(),
         ]);
+        console.log(`Process ${address}:`, { steps, currentStepIndex, isCompleted, isFailed, lotNumber });
         return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed };
       }));
 
@@ -134,8 +135,9 @@ const App = () => {
                   steps={process.steps}
                   currentStepIndex={process.currentStepIndex}
                   lotNumber={process.lotNumber}
-                  updateState={updateState}
+                  updateState={() => updateState()}
                   role={role}
+                  isFailed={process.isFailed} // Passa lo stato di fallimento
                 />
               ))}
             </Tabs.Panel>

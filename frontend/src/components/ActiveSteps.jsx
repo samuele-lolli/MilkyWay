@@ -3,7 +3,7 @@ import { Table, TextInput, Button } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
 
-const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, updateState, role }) => {
+const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, updateState, role, isFailed }) => {
   const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
   const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   const [actualContract, setActualContract] = useState(null);
@@ -46,6 +46,9 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   const completeStep = async (index) => {
     try {
+      if (isFailed) {
+        throw new Error("Il processo è fallito e non può essere completato");
+      }
       if (steps[index][1] === '0x0000000000000000000000000000000000000000') {
         throw new Error("Supervisore non assegnato per questo step");
       }
@@ -111,18 +114,22 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
             <tr key={index}>
               <td>{step[0]}</td>
               <td>
-                {step[1] === '0x0000000000000000000000000000000000000000' ? (
-                  <TextInput
-                    radius="md"
-                    variant="unstyled"
-                    placeholder="Supervisor Address"
-                    value={supervisorAddresses[index] || ''}
-                    onChange={(e) => handleSupervisorChange(e, index)}
-                    onKeyDown={(e) => handleKeyPress(e, index, 'supervisor')}
-                    disabled={role !== '1'}
-                  />
+                {index === 1 ? (
+                  "Sensor for temperature"
                 ) : (
-                  step[1]
+                  step[1] === '0x0000000000000000000000000000000000000000' ? (
+                    <TextInput
+                      radius="md"
+                      variant="unstyled"
+                      placeholder="Supervisor Address"
+                      value={supervisorAddresses[index] || ''}
+                      onChange={(e) => handleSupervisorChange(e, index)}
+                      onKeyDown={(e) => handleKeyPress(e, index, 'supervisor')}
+                      disabled={role !== '1'}
+                    />
+                  ) : (
+                    step[1]
+                  )
                 )}
               </td>
               <td>{step[2] ? 'Completed' : 'Pending'}</td>
@@ -143,7 +150,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                 )}
               </td>
               <td style={{ textAlign: 'center' }}>
-              {role === '2' && !step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
+                {role === '2' && !step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
                   <Button variant="light" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>
                 )}
               </td>

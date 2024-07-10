@@ -31,22 +31,23 @@ contract MilkProcess {
 
     function initializeSteps() internal {
         steps.push(Step("Raccolta", address(0), false, 0, 0, "", lotNumber, false));
-        steps.push(Step("Trasporto", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Trasporto", address(0), false, 0, 0, "", lotNumber, false)); // Supervisore automatico
         steps.push(Step("Lavorazione", address(0), false, 0, 0, "", lotNumber, false));
         steps.push(Step("Confezionamento", address(0), false, 0, 0, "", lotNumber, false));
         steps.push(Step("Distribuzione", address(0), false, 0, 0, "", lotNumber, false));
         currentStepIndex = 0;
     }
 
-    function assignSupervisor(uint stepIndex,address supervisor) external onlyAdmin {
+    function assignSupervisor(uint stepIndex, address supervisor) external onlyAdmin {
         require(stepIndex < steps.length, "Step index out of range");
         steps[stepIndex].supervisor = supervisor;
     }
 
     function completeStep(string memory _location) external onlySupervisor {
+        require(!isFailed, "Process has already failed");
         require(currentStepIndex < steps.length, "All steps are already completed");
         Step storage step = steps[currentStepIndex];
-        require(msg.sender == step.supervisor,"Only assigned supervisor can complete the step");
+        require(msg.sender == step.supervisor, "Only assigned supervisor can complete the step");
         step.completed = true;
         step.endTime = block.timestamp;
 
@@ -58,15 +59,41 @@ contract MilkProcess {
 
         if (currentStepIndex < steps.length) {
             steps[currentStepIndex].startTime = block.timestamp;
+            if(currentStepIndex == 1){
+                simulateTemperatureCheck();
+            }
         }
     }
 
     function failStep() external onlySupervisor {
+        require(!isFailed, "Process has already failed");
         require(currentStepIndex < steps.length, "All steps are already completed");
         Step storage step = steps[currentStepIndex];
         require(msg.sender == step.supervisor, "Only assigned supervisor can fail the step");
         step.failed = true;
         isFailed = true;
+    }
+    function simulateTemperatureCheck() internal {
+        require(!isFailed, "Process has already failed");
+
+        Step storage step = steps[currentStepIndex];
+    
+        // Genera un numero casuale tra 0 e 99
+        uint random = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 100;
+
+        // 90% di probabilità di completamento, 10% di fallimento
+        if (random < 50) {
+            step.completed = true;
+            step.endTime = block.timestamp;
+            step.location = "Automatic Transport";
+            currentStepIndex++;
+            if (currentStepIndex < steps.length) {
+                steps[currentStepIndex].startTime = block.timestamp;
+            }
+        } else {
+            step.failed = true;
+            isFailed = true;
+        }
     }
 
     function isReasonableLocation(string memory _location) internal pure returns (bool) {
@@ -77,7 +104,7 @@ contract MilkProcess {
         return currentStepIndex >= steps.length;
     }
 
-    function getSteps() external view returns (Step[] memory){
+    function getSteps() external view returns (Step[] memory) {
         return steps;
     }
 
