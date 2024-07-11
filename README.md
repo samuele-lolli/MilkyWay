@@ -17,6 +17,7 @@
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/540px-Npm-logo.svg.png" height="60">
   </a>
 </p>
+
 ## A supply chain management decentralized application
 
 ### Description
