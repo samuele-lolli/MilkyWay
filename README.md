@@ -1,4 +1,4 @@
-# MilkChain
+# MilkyWay
 ## A supply chain management decentralized application
 
 ### Description
