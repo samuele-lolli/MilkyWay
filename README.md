@@ -39,6 +39,6 @@ npm install
 npm run dev
  ```
 
-[!NOTE]  
-For the mobile application, refer to MilkChain-Consumer readme
+> [!NOTE]  
+> For the mobile application, refer to MilkChain-Consumer readme
 
