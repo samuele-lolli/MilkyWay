@@ -1,20 +1,20 @@
 # MilkyWay
 <p align="center">
   <a href="https://archive.trufflesuite.com/ganache/">
-    <img src="https://seeklogo.com/images/G/ganache-logo-1EB72084A8-seeklogo.com.png" width="90">
+    <img src="https://seeklogo.com/images/G/ganache-logo-1EB72084A8-seeklogo.com.png" height="60">
   </a>
   <a href="https://soliditylang.org/">
-    <img src="https://docs.soliditylang.org/en/latest/_images/solidity_logo.svg" width="80">       
+    <img src="https://docs.soliditylang.org/en/latest/_images/solidity_logo.svg" height="60">       
   </a>
   <a href="https://reactjs.org/">
-   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png" width="80">
+   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png" height="60">
   </a>
   <a href="https://www.trufflesuite.com/">
-    <img src="https://seeklogo.com/images/T/truffle-logo-2DC7EBABF2-seeklogo.com.png" width="50">
+    <img src="https://seeklogo.com/images/T/truffle-logo-2DC7EBABF2-seeklogo.com.png" height="60">
   </a>
    &nbsp;&nbsp;&nbsp;
   <a href="https://www.npmjs.com/package/web3">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/540px-Npm-logo.svg.png" width="60">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/540px-Npm-logo.svg.png" height="60">
   </a>
 </p>
 ## A supply chain management decentralized application
