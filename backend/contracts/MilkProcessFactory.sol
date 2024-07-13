@@ -16,11 +16,11 @@ contract MilkProcessFactory {
         users.push(msg.sender);
     }
 
-    function createNewProcess(uint quantity) external onlyAdmin returns (address[] memory) {
+    function createNewProcess(uint quantity, bool isIntero) external onlyAdmin returns (address[] memory) {
         address[] memory newProcesses = new address[](quantity);
         for (uint i = 0; i < quantity; i++) {
             lotNumber = lotNumber + 1;
-            MilkProcess newProcess = new MilkProcess(lotNumber, address(this));
+            MilkProcess newProcess = new MilkProcess(lotNumber, address(this), isIntero);
             processes.push(address(newProcess));
             newProcesses[i] = address(newProcess);
         }

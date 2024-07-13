@@ -17,7 +17,8 @@ const App = () => {
   const [processContracts, setProcessContracts] = useState([]);
   const [completedProcesses, setCompletedProcesses] = useState([]);
   const [role, setRole] = useState(null);
-  const [newProcessCount, setNewProcessCount] = useState(1);
+  const [newInteroProcessCount, setNewInteroProcessCount] = useState(1);
+  const [newLCProcessCount, setNewLCProcessCount] = useState(1);
 
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
   const tabStyle = { padding: `${rem(6)} ${rem(18)}` };
@@ -57,15 +58,16 @@ const App = () => {
       const processAddresses = await factoryContract.methods.getAllProcesses().call();
       const allProcesses = await Promise.all(processAddresses.map(async (address) => {
         const processContract = await getContract(web3, 'MilkProcess', address);
-        const [steps, currentStepIndex, isCompleted, isFailed, lotNumber] = await Promise.all([
+        const [steps, currentStepIndex, isCompleted, isFailed, lotNumber, isIntero] = await Promise.all([
           processContract.methods.getSteps().call(),
           processContract.methods.currentStepIndex().call(),
           processContract.methods.isProcessCompleted().call(),
           processContract.methods.isFailed().call(),
           processContract.methods.lotNumber().call(),
+          processContract.methods.isIntero().call()
         ]);
-        console.log(`Process ${address}:`, { steps, currentStepIndex, isCompleted, isFailed, lotNumber });
-        return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed };
+        console.log(`Process ${address}:`, { steps, currentStepIndex, isCompleted, isFailed, lotNumber, isIntero });
+        return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed, isIntero };
       }));
 
       setProcessContracts(allProcesses.filter(p => !p.isCompleted && !p.isFailed));
@@ -76,55 +78,79 @@ const App = () => {
     console.log("Update over");
   }, [web3, factoryContract]);
 
-  const createNewProcesses = async () => {
+  const createNewProcesses = async (isIntero) => {
     try {
-      await factoryContract.methods.createNewProcess(newProcessCount).send({ from: account });
-      await updateState();
-      toast.success(`Creati ${newProcessCount} nuovi processi`);
+      if(isIntero){
+        await factoryContract.methods.createNewProcess(newInteroProcessCount, true).send({ from: account });
+        await updateState();
+        toast.success(`Creati ${newInteroProcessCount} nuovi processi per il latte intero`);
+      }else{
+        await factoryContract.methods.createNewProcess(newLCProcessCount, false).send({ from: account });
+        await updateState();
+        toast.success(`Creati ${newLCProcessCount} nuovi processi per il latte a lunga conservazione`);
+      }
+      
     } catch (error) {
       toast.error("Errore durante la creazione dei nuovi processi: " + error.message);
     }
   };
 
   return (
-    <div>
+    <div id='app'>
       {(role === '1' || role === '2' || role === '3') ? (
-        <div id='app-container'>
+        <div>
           <ToastContainer />
-          <Title order={1} weight={700}>Milk Supply Chain</Title>
-          <Tabs variant="pills" radius="lg" defaultValue="active">
-            <Tabs.List style={{ gap: '10px' }}>
-              <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
-                <Title order={6}>Processi Attivi</Title>
-              </Tabs.Tab>
-              <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
-                <Title order={6}>Ricerca</Title>
-              </Tabs.Tab>
-              <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
-                <Title order={6}>Storico</Title>
-              </Tabs.Tab>
-              {role === '1' && (
-                <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
-                  <Title order={6}>Assegna Ruoli</Title>
+          <div id='bar'>
+            <Title id='title' style={{fontSize: '60px'}}>MilkyWay</Title>
+          </div>
+            <Tabs color='#497DAD' variant="pills" style={{padding: '20px 25px'}} radius="lg" defaultValue="active">
+              <Tabs.List style={{ gap: '10px' }}>
+                <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+                  <Title order={6}>Processi Attivi</Title>
                 </Tabs.Tab>
-              )}
-            </Tabs.List>
+                <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+                  <Title order={6}>Ricerca</Title>
+                </Tabs.Tab>
+                <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+                  <Title order={6}>Storico</Title>
+                </Tabs.Tab>
+                {role === '1' && (
+                  <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
+                    <Title order={6}>Assegna Ruoli</Title>
+                  </Tabs.Tab>
+                )}
+              </Tabs.List>
             <Tabs.Panel value="active">
               <div style={{ marginTop: '20px' }}>
                 <h2>Active processes</h2>
+                  <div style={{display:'flex'}}>
                 {role === '1' && (
+                  <>
                   <Group align="flex-end">
                     <NumberInput
-                      value={newProcessCount}
-                      onChange={(value) => setNewProcessCount(value)}
+                      value={newInteroProcessCount}
+                      onChange={(value) => setNewInteroProcessCount(value)}
                       radius="md"
                       min={1}
-                      max={3}
+                      max={10}
                       style={{ maxWidth: '60px' }}
                     />
-                    <Button radius="md" onClick={createNewProcesses} style={{ marginLeft: '10px' }}>Crea Nuovi Processi</Button>
+                    <Button radius="lg" onClick={()=> createNewProcesses(true)} style={{ marginLeft: '10px' }}>Crea Nuovi Processi (Latte Intero)</Button>
                   </Group>
+                  <Group align="flex-end">
+                    <NumberInput
+                      value={newLCProcessCount}
+                      onChange={(value) => setNewLCProcessCount(value)}
+                      radius="md"
+                      min={1}
+                      max={10}
+                      style={{ maxWidth: '60px', marginLeft: '40px'}}
+                    />
+                    <Button radius="lg" color="teal" onClick={()=> createNewProcesses(false)} style={{ marginLeft: '10px' }}> Crea Nuovi Processi (Latte a Lunga Conservazione)</Button>
+                  </Group>
+                  </>
                 )}
+                </div>
               </div>
               {processContracts.map((process) => (
                 <ActiveSteps
@@ -136,6 +162,7 @@ const App = () => {
                   steps={process.steps}
                   currentStepIndex={process.currentStepIndex}
                   lotNumber={process.lotNumber}
+                  isIntero={process.isIntero}
                   updateState={() => updateState()}
                   role={role}
                   isFailed={process.isFailed} // Passa lo stato di fallimento

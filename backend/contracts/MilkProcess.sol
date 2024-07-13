@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./MilkProcessFactory.sol";
 
 contract MilkProcess {
+
     struct Step {
         string name;
         address supervisor;
@@ -20,21 +21,37 @@ contract MilkProcess {
     uint public lotNumber;
     address public factory;
     bool public isFailed;
+    bool public isIntero;
 
-    constructor(uint _lotNumber, address _factory) {
+    constructor(uint _lotNumber, address _factory, bool _isIntero) {
         lotNumber = _lotNumber;
         factory = _factory;
+        isFailed = false;
+        isIntero = _isIntero;
         initializeSteps();
         steps[0].startTime = block.timestamp;
-        isFailed = false;
     }
 
     function initializeSteps() internal {
         steps.push(Step("Raccolta", address(0), false, 0, 0, "", lotNumber, false));
         steps.push(Step("Trasporto", address(0), false, 0, 0, "", lotNumber, false)); // Supervisore automatico
-        steps.push(Step("Lavorazione", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Pulitura", address(0), false, 0, 0, "", lotNumber, false)); 
+        steps.push(Step("Standardizzazione", address(0), false, 0, 0, "", lotNumber, false));
+        steps.push(Step("Omogeneizzazione", address(0), false, 0, 0, "", lotNumber, false));
+        if(isIntero){
+            steps.push(Step("Pastorizzazione", address(0), false, 0, 0, "", lotNumber, false)); // Supervisore automatico
+        }else{
+            steps.push(Step("Sterilizzazione", address(0), false, 0, 0, "", lotNumber, false)); // Supervisore automatico
+        }
         steps.push(Step("Confezionamento", address(0), false, 0, 0, "", lotNumber, false));
-        steps.push(Step("Distribuzione", address(0), false, 0, 0, "", lotNumber, false));
+        if(isIntero){
+            steps.push(Step("Stoccaggio refrigerato", address(0), false, 0, 0, "", lotNumber, false)); // Supervisore automatico
+            steps.push(Step("Distribuzione refrigerata", address(0), false, 0, 0, "", lotNumber, false));
+        }else{
+            steps.push(Step("Stoccaggio", address(0), false, 0, 0, "", lotNumber, false)); // Supervisore automatico
+            steps.push(Step("Distribuzione", address(0), false, 0, 0, "", lotNumber, false));
+        }
+        steps.push(Step("Consegna", address(0), false, 0, 0, "", lotNumber, false));
         currentStepIndex = 0;
     }
 
@@ -59,9 +76,6 @@ contract MilkProcess {
 
         if (currentStepIndex < steps.length) {
             steps[currentStepIndex].startTime = block.timestamp;
-           /* if(currentStepIndex == 1){
-                simulateTemperatureCheck();
-            } */
         }
     }
 
@@ -74,29 +88,6 @@ contract MilkProcess {
         isFailed = true;
         currentStepIndex++;
     }
-    
-    /* function simulateTemperatureCheck() internal {
-        require(!isFailed, "Process has already failed");
-
-        Step storage step = steps[currentStepIndex];
-    
-        // Genera un numero casuale tra 0 e 99
-        uint random = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 100;
-
-        // 90% di probabilità di completamento, 10% di fallimento
-        if (random < 50) {
-            step.completed = true;
-            step.endTime = block.timestamp;
-            step.location = "Automatic Transport";
-            currentStepIndex++;
-            if (currentStepIndex < steps.length) {
-                steps[currentStepIndex].startTime = block.timestamp;
-            }
-        } else {
-            step.failed = true;
-            isFailed = true;
-        }
-    } */
 
     function isTemperatureOK(bool valid) external {
         require(!isFailed, "Process has already failed");
@@ -106,7 +97,7 @@ contract MilkProcess {
         if (valid){
             step.completed = true;
             step.endTime = block.timestamp;
-            step.location = "Automatic Transport";
+            step.location = "Procedure up to standards";
             currentStepIndex++;
             if (currentStepIndex < steps.length) {
                 steps[currentStepIndex].startTime = block.timestamp;
@@ -114,6 +105,12 @@ contract MilkProcess {
         }else{
             step.failed = true;
             isFailed = true;
+            step.endTime = block.timestamp;
+            if (currentStepIndex == 1){
+              step.location = "Road transport failed";
+            } else if ((currentStepIndex == 7 || currentStepIndex == 8) && isIntero){
+                step.location = "Storage failed";
+            }
         }
     }
 

@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, TextInput, Button, CheckIcon } from '@mantine/core';
+import { Table, TextInput, Button, CheckIcon, Text, Select } from '@mantine/core';
 import { toast } from 'react-toastify';
-import { IconCheck, IconX } from '@tabler/icons-react';
 import { getContract } from "../web3"
+import { checkPasteurization } from '../simulation/pasteurizerSim';
+import { checkSterilization } from '../simulation/sterilizerSim';
+import { checkTravel } from '../simulation/transportSim';
+import { checkStorage } from '../simulation/storageSim';
+import { checkShipping } from '../simulation/shippingSim';
+import { locationOptionsIntero, locationOptionsLC } from '../data/options';
 
-const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, updateState, role, isFailed }) => {
+
+const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, isIntero, updateState, role, isFailed }) => {
   const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
   const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   const [actualContract, setActualContract] = useState(null);
@@ -19,13 +25,9 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     getActualContract();
   }, [web3, processContractAddress]);
 
-  const handleKeyPress = async (e, index, type) => {
+  const handleKeyPress = async (e, index) => {
     if (e.key === 'Enter') {
-      if (type === 'supervisor') {
-        await assignSupervisor(index);
-      } else if (type === 'location') {
-        await completeStep(index);
-      }
+      await assignSupervisor(index);
     }
   };
 
@@ -52,8 +54,21 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     }
   };
 
-  const completeStep = async (index) => {
+  const handleLocationSelect = async (value, index) => {
     try {
+      const newLocationInputs = [...locationInputs];
+      newLocationInputs[index] = value;
+      setLocationInputs(newLocationInputs);
+      await completeStep(index, value); // Passa il valore selezionato direttamente
+    } catch (error) {
+      console.error("Error handling location select:", error);
+      toast.error("Errore nel completare lo step con la posizione selezionata");
+    }
+  };
+
+  const completeStep = async (index, location) => {
+    try {
+      console.log(location);
       if (isFailed) {
         throw new Error("Il processo è fallito e non può essere completato");
       }
@@ -63,7 +78,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
       if (steps[index][1].toLowerCase() !== account.toLowerCase()) {
         throw new Error("Solo il supervisore assegnato può completare questo step");
       }
-      const location = locationInputs[index].trim();
       const isReasonableLocation = true; 
       if (!isReasonableLocation) {
         throw new Error("La posizione non è ragionevole per questo step");
@@ -114,36 +128,55 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     setSupervisorAddresses(newAddresses);
   };
 
-  const handleLocationChange = (e, index) => {
-    const newLocations = [...locationInputs];
-    newLocations[index] = e.target.value;
-    setLocationInputs(newLocations);
+  const handleCheckPasteurization = async (processContractAddress) => {
+    const result = checkPasteurization(processContractAddress);
+    if (result) {
+      await actualContract.methods.isTemperatureOK(result).send({ from: account });
+      await updateState();
+    } else {
+      toast.error("Il processo di pastorizzazione del lotto non è andato a buon fine");
+    }
   };
 
-  const handleTemperatureCheck = async (index, isValid) => {
-    try {
-      console.log(`Setting temperature check for step ${index} to ${isValid}`);
-      await actualContract.methods.isTemperatureOK(isValid).send({ from: account });
-      console.log("Temperature check set successfully");
+  const handleCheckSterilization = async (processContractAddress) => {
+    const result = checkSterilization(processContractAddress);
+    if (result) {
+      await actualContract.methods.isTemperatureOK(result).send({ from: account });
       await updateState();
-      toast.success(`Controllo temperatura ${isValid ? 'superato' : 'fallito'} con successo`);
-    } catch (error) {
-      console.error("Error setting temperature check:", error);
-      toast.error(error.message);
+    } else {
+      toast.error("Il processo di sterilizzazione del lotto non è andato a buon fine");
     }
+  };
+
+  const handleCheckTravel = async (processContractAddress) => {
+    console.log("Travel temperature: ", checkTravel(processContractAddress));
+    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
+    await updateState();
+  };
+
+  const handleCheckStorage = async (processContractAddress) => {
+    console.log("Storage temperature: ", checkStorage(processContractAddress));
+    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
+    await updateState();
+  };
+
+  const handleCheckShipping = async (processContractAddress) => {
+    console.log("Shipping temperature: ", checkStorage(processContractAddress));
+    await actualContract.methods.isTemperatureOK(checkShipping(processContractAddress)).send({ from: account });
+    await updateState();
   };
 
   return (
     <div style={{ marginTop: '20px' }}>
-      <label>Current Lot Number: {String(lotNumber)}</label>
-      <Table>
+        <label style={{ fontSize: '20px', display: 'inline-block', color: Boolean(isIntero) ? '#497DAC' : 'green' }}><b>Lotto {String(lotNumber)}</b></label>
+      <table>
         <thead>
           <tr>
-            <th>Step</th>
-            <th>Supervisor</th>
-            <th>Status</th>
-            <th>Location</th>
-            {role === '2' && <th>Actions</th>}
+            <th>Fase</th>
+            <th>Supervisore</th>
+            <th>Stato</th>
+            <th>Posizione</th>
+            {role === '2' && <th>Azioni</th>}
           </tr>
         </thead>
         <tbody>
@@ -151,17 +184,17 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
             <tr key={index}>
               <td>{step[0]}</td>
               <td>
-                {index === 1 ? (
-                  "Sensor for temperature"
+                {index === 1 || index === 5 || (index === 7 && Boolean(isIntero)) || (index === 8 && Boolean(isIntero)) ? (
+                  "Sensore di temperatura"
                 ) : (
                   step[1] === '0x0000000000000000000000000000000000000000' ? (
                     <TextInput
                       radius="md"
                       variant="unstyled"
-                      placeholder="Supervisor Address"
+                      placeholder="Supervisor address"
                       value={supervisorAddresses[index] || ''}
                       onChange={(e) => handleSupervisorChange(e, index)}
-                      onKeyDown={(e) => handleKeyPress(e, index, 'supervisor')}
+                      onKeyDown={(e) => handleKeyPress(e, index)}
                       disabled={role !== '1'}
                     />
                   ) : (
@@ -171,37 +204,45 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
               </td>
               <td>{step[2] ? 'Completed' : 'Pending'}</td>
               <td>
-                {index === 1 && currentStepIndex === 1 ? (
+                {index === 5 && currentStepIndex === 5 ? (
                   <div>
-                    <Button variant="light" color="green" size="xs" radius="xl" onClick={() => handleTemperatureCheck(index, true)}><IconCheck style={{color: 'green'}}/></Button>
-                    <Button variant="light" color="red" size="xs" radius="xl" onClick={() => handleTemperatureCheck(index, false)}><IconX style={{color: 'red'}}/></Button>
+                    {Boolean(isIntero) ? (
+                      <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckPasteurization(processContractAddress)}>Simula</Button>
+                    ) : (
+                      <Button variant="dark" color="green" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckSterilization(processContractAddress)}>Simula</Button>
+                    )}
                   </div>
+                ) : index === 1 && currentStepIndex === 1 ? (
+                  <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckTravel(processContractAddress)}>Simula trasporto</Button>
+                ) : Boolean(isIntero) && index === 7 && currentStepIndex === 7 ? (
+                  <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckStorage(processContractAddress)}>Simula Stoccaggio</Button>
+                ) : (index === 8 && Boolean(isIntero) && currentStepIndex == 8) ? (
+                  <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckShipping(processContractAddress)}>Simula consegna</Button>
                 ) : (
                   index <= currentStepIndex && !step[2] ? (
-                    <TextInput
-                      radius="md"
-                      variant="unstyled"
-                      placeholder="Location (e.g., address or coordinates)"
-                      value={locationInputs[index] || ''}
-                      onChange={(e) => handleLocationChange(e, index)}
-                      onKeyDown={(e) => handleKeyPress(e, index, 'location')}
+                    <Select
+                      searchable
+                      data={Boolean(isIntero) ? locationOptionsIntero[index] : locationOptionsLC[index]}
+                      onChange={(value) => handleLocationSelect(value, index)}
                       disabled={step[1] === '0x0000000000000000000000000000000000000000' || role !== '2' || steps[index][1].toLowerCase() !== account.toLowerCase()}
-                      styles={{ padding: '8px' }}
-                    />
+                    >
+                    </Select>
                   ) : (
                     step[5]
                   )
                 )}
               </td>
+              {role === '2' && (
               <td style={{ textAlign: 'center' }}>
-                {role === '2' && !step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
-                  <Button variant="light" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>
+                {!step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
+                  <Button variant="dark" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>    
                 )}
               </td>
+            )}
             </tr>
           ))}
         </tbody>
-      </Table>
+      </table>
     </div>
   );
 };

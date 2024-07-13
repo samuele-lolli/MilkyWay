@@ -9,7 +9,7 @@ const customTheme = {
       "#90A4B6",
       "#7996B0",
       "#6089AE",
-      "#497DAC",
+      "#497DAD",
       "#4B7092",
       "#4A657D",
       "#475A6C",
@@ -24,7 +24,6 @@ const customTheme = {
     fontFamily: 'Product Sans, sans-serif',
     fontWeight: 'bold',
     sizes: {
-      h1: { fontWeight: 'bold', fontSize: '36px', fontWeight: 'bold', lineHeight: 1.2 },
       h2: { fontSize: '32px', fontWeight: 'bold', lineHeight: 1.3 },
       h3: { fontSize: '28px', fontWeight: 'bold', lineHeight: 1.4 },
       h4: { fontSize: '24px', fontWeight: 'bold', lineHeight: 1.5 },
