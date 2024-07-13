@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TextInput, Button, Select, Table, Card, Grid, Text } from '@mantine/core';
+import { TextInput, Button, Select, Table, Card, Grid, Text, Title } from '@mantine/core';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -10,6 +10,7 @@ const RoleAssignment = ({ contract, account }) => {
   const [removeAddress, setRemoveAddress] = useState('');
   const [assignError, setAssignError] = useState('');
   const [removeError, setRemoveError] = useState('');
+  const [filter, setFilter] = useState('all'); // New state for the filter
 
   const handleAddressFocus = useCallback(() => {
     setAssignError('');
@@ -88,14 +89,53 @@ const RoleAssignment = ({ contract, account }) => {
     { value: '3', label: 'Operator' },
   ];
 
+  const filterOptions = [
+    { value: 'all', label: 'Tutti' },
+    { value: '1', label: 'Admin' },
+    { value: '2', label: 'Supervisor' },
+    { value: '3', label: 'Operator' },
+  ];
+
+  const filteredRoles = assignedRoles.filter((assignedRole) => {
+    if (filter === 'all' || filter === null) return true;
+    return assignedRole.role === filter;
+  });
+
   return (
     <div>
       <Grid gutter="lg">
-        <Grid.Col span={6}>
-          <Card shadow="sm" padding="lg" style={{ padding: '20px', marginRight: '20px' }}>
+        <Grid.Col span={8} style={{ paddingRight: '20px' }}>
+          <Select
+            label="Filtra per ruolo"
+            placeholder="Seleziona un filtro"
+            radius="md"
+            data={filterOptions}
+            value={filter}
+            onChange={setFilter}
+            defaultValue="all"
+          />
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Ruolo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRoles.map((assignedRole, index) => (
+                <tr key={index}>
+                  <td>{assignedRole.account}</td>
+                  <td>{assignedRole.role === '1' ? 'Admin' : assignedRole.role === '2' ? 'Supervisor' : 'Operator'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Grid.Col>
+        <Grid.Col span={4} style={{ paddingLeft: '20' }}>
+          <Card shadow="sm" padding="lg" style={{ padding: '20px', marginBottom: '20px' }}>
+            <Title order={5} style={{marginBottom: '10px'}}>Assegna Ruolo</Title>
             <div style={{ padding: '5px 0' }}>
               <TextInput
-                label="Indirizzo"
                 placeholder="Indirizzo dell'account"
                 radius="md"
                 value={address}
@@ -105,7 +145,6 @@ const RoleAssignment = ({ contract, account }) => {
             </div>
             <div style={{ padding: '5px 0' }}>
               <Select
-                label="Ruolo"
                 placeholder="Seleziona un ruolo"
                 radius="md"
                 data={roleOptions}
@@ -115,15 +154,13 @@ const RoleAssignment = ({ contract, account }) => {
             </div>
             {assignError && <Text color="red">{assignError}</Text>}
             <div style={{ padding: '5px 0' }}>
-              <Button radius="md" onClick={assignRole}>Assegna Ruolo</Button>
+              <Button radius="md" onClick={assignRole}>Salva</Button>
             </div>
           </Card>
-        </Grid.Col>
-        <Grid.Col span={6}>
           <Card shadow="sm" padding="lg" style={{ padding: '20px' }}>
+            <Title order={5} style={{marginBottom: '10px', color: 'red'}}>Rimuovi Ruolo</Title>
             <div style={{ padding: '10px 0' }}>
               <TextInput
-                label="Indirizzo per rimuovere il ruolo"
                 placeholder="Indirizzo dell'account"
                 radius="md"
                 value={removeAddress}
@@ -133,27 +170,11 @@ const RoleAssignment = ({ contract, account }) => {
             </div>
             {removeError && <Text color="red">{removeError}</Text>}
             <div style={{ padding: '5px 0' }}>
-              <Button radius="md" onClick={removeRole} color="red">Rimuovi Ruolo</Button>
+              <Button radius="md" onClick={removeRole} color="red">Rimuovi</Button>
             </div>
           </Card>
         </Grid.Col>
       </Grid>
-      <Table>
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th>Ruolo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {assignedRoles.map((assignedRole, index) => (
-            <tr key={index}>
-              <td>{assignedRole.account}</td>
-              <td>{assignedRole.role === '1' ? 'Admin' : assignedRole.role === '2' ? 'Supervisor' : 'Operator'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
     </div>
   );
 };

@@ -101,7 +101,7 @@ const App = () => {
         <div>
           <ToastContainer />
           <div id='bar'>
-            <Title id='title' style={{fontSize: '60px'}}>MilkyWay</Title>
+            <Title id='title' style={{fontSize: '70px'}}>MilkyWay</Title>
           </div>
             <Tabs color='#497DAD' variant="pills" style={{padding: '20px 25px'}} radius="lg" defaultValue="active">
               <Tabs.List style={{ gap: '10px' }}>

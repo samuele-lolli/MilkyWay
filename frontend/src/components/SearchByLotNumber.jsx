@@ -122,7 +122,7 @@ const SearchByLotNumber = ({ allSteps }) => {
               <Text>
                 Stato del lotto: <Text component="span" fw={700} c={getLotStatus().color}>{getLotStatus().text}</Text>
               </Text>
-              <Table>
+              <table>
                 <thead>
                   <tr>
                     <th>Step</th>
@@ -154,7 +154,7 @@ const SearchByLotNumber = ({ allSteps }) => {
                     );
                   })}
                 </tbody>
-              </Table>
+              </table>
             </>
           ) : (
             <p>Nessun risultato trovato per il lotto numero {searchLotNumber}</p>

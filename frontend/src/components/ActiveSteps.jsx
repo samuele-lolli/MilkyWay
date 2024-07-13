@@ -14,6 +14,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
   const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
   const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   const [actualContract, setActualContract] = useState(null);
+  const [inputErrors, setInputErrors] = useState(Array(steps.length).fill(false)); // Stato per gli errori
 
   useEffect(() => {
     const getActualContract = async () => {
@@ -126,123 +127,155 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     const newAddresses = [...supervisorAddresses];
     newAddresses[index] = e.target.value;
     setSupervisorAddresses(newAddresses);
+
+    const newErrors = [...inputErrors];
+    newErrors[index] = false; // Rimuove l'errore quando si richiede il focus
+    setInputErrors(newErrors);
   };
 
-  const handleCheckPasteurization = async (processContractAddress) => {
-    const result = checkPasteurization(processContractAddress);
-    if (result) {
-      await actualContract.methods.isTemperatureOK(result).send({ from: account });
-      await updateState();
-    } else {
-      toast.error("Il processo di pastorizzazione del lotto non è andato a buon fine");
+  useEffect(() => {
+    console.log("Supervisori:", supervisorAddresses);
+  }, [supervisorAddresses]);
+
+  const handleSaveSupervisors = async (e) => {
+    e.preventDefault();
+    try {
+      let allValid = true;
+      const newErrors = [...inputErrors];
+
+      for (let i = 0; i < supervisorAddresses.length; i++) {
+        const supervisorAddress = supervisorAddresses[i].trim();
+        if (supervisorAddress !== '' && !web3.utils.isAddress(supervisorAddress)) {
+          newErrors[i] = true;
+          allValid = false;
+        } else {
+          newErrors[i] = false;
+        }
+      }
+
+      setInputErrors(newErrors);
+
+      if (allValid) {
+        for (let i = 0; i < supervisorAddresses.length; i++) {
+          const supervisorAddress = supervisorAddresses[i].trim();
+          if (supervisorAddress !== '') {
+            const supervisorRole = await factoryContract.methods.getRole(supervisorAddress).call();
+            if (supervisorRole.toString() !== '2') {
+              newErrors[i] = true;
+              allValid = false;
+            }
+          }
+        }
+        setInputErrors(newErrors);
+        // Rimuovi gli elementi vuoti dall'array
+        const supervisors = supervisorAddresses.filter(address => address.trim() !== '');
+        console.log("Supervisori validi:", supervisors);
+        await actualContract.methods.assignSupervisors(supervisors).send({ from: account });
+        await updateState();
+        toast.success("Supervisori assegnati con successo");
+      } else {
+        throw new Error("Alcuni indirizzi non sono validi o non corrispondono a supervisori");
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
-  };
-
-  const handleCheckSterilization = async (processContractAddress) => {
-    const result = checkSterilization(processContractAddress);
-    if (result) {
-      await actualContract.methods.isTemperatureOK(result).send({ from: account });
-      await updateState();
-    } else {
-      toast.error("Il processo di sterilizzazione del lotto non è andato a buon fine");
-    }
-  };
-
-  const handleCheckTravel = async (processContractAddress) => {
-    console.log("Travel temperature: ", checkTravel(processContractAddress));
-    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
-    await updateState();
-  };
-
-  const handleCheckStorage = async (processContractAddress) => {
-    console.log("Storage temperature: ", checkStorage(processContractAddress));
-    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
-    await updateState();
-  };
-
-  const handleCheckShipping = async (processContractAddress) => {
-    console.log("Shipping temperature: ", checkStorage(processContractAddress));
-    await actualContract.methods.isTemperatureOK(checkShipping(processContractAddress)).send({ from: account });
-    await updateState();
   };
 
   return (
     <div style={{ marginTop: '20px' }}>
         <label style={{ fontSize: '20px', display: 'inline-block', color: Boolean(isIntero) ? '#497DAC' : 'green' }}><b>Lotto {String(lotNumber)}</b></label>
-      <table>
-        <thead>
-          <tr>
-            <th>Fase</th>
-            <th>Supervisore</th>
-            <th>Stato</th>
-            <th>Posizione</th>
-            {role === '2' && <th>Azioni</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {steps.map((step, index) => (
-            <tr key={index}>
-              <td>{step[0]}</td>
-              <td>
-                {index === 1 || index === 5 || (index === 7 && Boolean(isIntero)) || (index === 8 && Boolean(isIntero)) ? (
-                  "Sensore di temperatura"
-                ) : (
-                  step[1] === '0x0000000000000000000000000000000000000000' ? (
-                    <TextInput
-                      radius="md"
-                      variant="unstyled"
-                      placeholder="Supervisor address"
-                      value={supervisorAddresses[index] || ''}
-                      onChange={(e) => handleSupervisorChange(e, index)}
-                      onKeyDown={(e) => handleKeyPress(e, index)}
-                      disabled={role !== '1'}
-                    />
-                  ) : (
-                    step[1]
-                  )
-                )}
-              </td>
-              <td>{step[2] ? 'Completed' : 'Pending'}</td>
-              <td>
-                {index === 5 && currentStepIndex === 5 ? (
-                  <div>
-                    {Boolean(isIntero) ? (
-                      <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckPasteurization(processContractAddress)}>Simula</Button>
-                    ) : (
-                      <Button variant="dark" color="green" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckSterilization(processContractAddress)}>Simula</Button>
-                    )}
-                  </div>
-                ) : index === 1 && currentStepIndex === 1 ? (
-                  <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckTravel(processContractAddress)}>Simula trasporto</Button>
-                ) : Boolean(isIntero) && index === 7 && currentStepIndex === 7 ? (
-                  <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckStorage(processContractAddress)}>Simula Stoccaggio</Button>
-                ) : (index === 8 && Boolean(isIntero) && currentStepIndex == 8) ? (
-                  <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckShipping(processContractAddress)}>Simula consegna</Button>
-                ) : (
-                  index <= currentStepIndex && !step[2] ? (
-                    <Select
-                      searchable
-                      data={Boolean(isIntero) ? locationOptionsIntero[index] : locationOptionsLC[index]}
-                      onChange={(value) => handleLocationSelect(value, index)}
-                      disabled={step[1] === '0x0000000000000000000000000000000000000000' || role !== '2' || steps[index][1].toLowerCase() !== account.toLowerCase()}
-                    >
-                    </Select>
-                  ) : (
-                    step[5]
-                  )
-                )}
-              </td>
-              {role === '2' && (
-              <td style={{ textAlign: 'center' }}>
-                {!step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
-                  <Button variant="dark" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>    
-                )}
-              </td>
-            )}
+      <form onSubmit={handleSaveSupervisors}>
+        <table>
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>Supervisore</th>
+              <th>Stato</th>
+              <th>Posizione</th>
+              {role === '2' && <th>Azioni</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {steps.map((step, index) => (
+              <tr key={index}>
+                <td>{step[0]}</td>
+                <td>
+                  {index === 1 || index === 5 || (index === 7 && Boolean(isIntero)) || (index === 8 && Boolean(isIntero)) ? (
+                    "Sensore di temperatura"
+                  ) : (
+                    step[1] === '0x0000000000000000000000000000000000000000' ? (
+                      <TextInput
+                        error={inputErrors[index]} // Mostra l'errore se presente
+                        radius="md"
+                        variant="unstyled"
+                        placeholder="Supervisor address"
+                        value={supervisorAddresses[index] || ''}
+                        onChange={(e) => handleSupervisorChange(e, index)}
+                        onKeyDown={(e) => handleKeyPress(e, index)}
+                        disabled={role !== '1'}
+                      />
+                    ) : (
+                      step[1]
+                    )
+                  )}
+                </td>
+                <td>{step[2] ? 'Completed' : 'Pending'}</td>
+                <td>
+                  {index === 5 && currentStepIndex === 5 ? (
+                    <div>
+                      {Boolean(isIntero) ? (
+                        <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckPasteurization(processContractAddress)}>Simula</Button>
+                      ) : (
+                        <Button variant="dark" color="green" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckSterilization(processContractAddress)}>Simula</Button>
+                      )}
+                    </div>
+                  ) : index === 1 && currentStepIndex === 1 ? (
+                    <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckTravel(processContractAddress)}>Simula trasporto</Button>
+                  ) : Boolean(isIntero) && index === 7 && currentStepIndex === 7 ? (
+                    <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckStorage(processContractAddress)}>Simula Stoccaggio</Button>
+                  ) : (index === 8 && Boolean(isIntero) && currentStepIndex == 8) ? (
+                    <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckShipping(processContractAddress)}>Simula consegna</Button>
+                  ) : (
+                    index <= currentStepIndex && !step[2] ? (
+                      <Select
+                        searchable
+                        data={Boolean(isIntero) ? locationOptionsIntero[index] : locationOptionsLC[index]}
+                        onChange={(value) => handleLocationSelect(value, index)}
+                        disabled={step[1] === '0x0000000000000000000000000000000000000000' || role !== '2' || steps[index][1].toLowerCase() !== account.toLowerCase()}
+                      >
+                      </Select>
+                    ) : (
+                      step[5]
+                    )
+                  )}
+                </td>
+                {role === '2' && (
+                <td style={{ textAlign: 'center' }}>
+                  {!step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
+                    <Button variant="dark" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>    
+                  )}
+                </td>
+              )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {supervisorAddresses.some((address) => address === '0x0000000000000000000000000000000000000000') && (
+          <Button 
+            type="submit" 
+            variant="dark" 
+            color="blue" 
+            size="md" 
+            radius="xl" 
+            style={{ width: '100%' }} 
+            disabled={supervisorAddresses.some((address, index) => 
+              address.trim() === '' && !( index === 1 || index === 5 || (index === 7 && Boolean(isIntero)) || (index === 8 && Boolean(isIntero)))
+            )}
+          >
+            Salva
+          </Button>
+        )}
+      </form>
     </div>
   );
 };

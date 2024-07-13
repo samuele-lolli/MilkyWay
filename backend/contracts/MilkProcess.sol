@@ -55,9 +55,15 @@ contract MilkProcess {
         currentStepIndex = 0;
     }
 
-    function assignSupervisor(uint stepIndex, address supervisor) external onlyAdmin {
-        require(stepIndex < steps.length, "Step index out of range");
-        steps[stepIndex].supervisor = supervisor;
+    function assignSupervisors(address[] memory supervisors) external onlyAdmin {
+        require(steps.length > 0, "Steps array cannot be empty");
+        uint j = 0;
+        for (uint i = 0; i < steps.length; i++) {
+            if (i != 1 && i != 5 && !(isIntero && (i == 7 || i == 8))) {
+                steps[i].supervisor = supervisors[j];
+                j++;
+            }
+        }
     }
 
     function completeStep(string memory _location) external onlySupervisor {

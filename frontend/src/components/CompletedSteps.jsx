@@ -48,7 +48,7 @@ const CompletedSteps = ({ allSteps }) => {
             <Text mb="md">
               Stato del lotto: <Text component="span" fw={700} c={getLotStatus(steps).color}>{getLotStatus(steps).text}</Text>
             </Text>
-            <Table>
+            <table>
               <thead>
                 <tr>
                   <th>Step</th>
@@ -77,7 +77,7 @@ const CompletedSteps = ({ allSteps }) => {
                   </tr>
                 ))}
               </tbody>
-            </Table>
+            </table>
           </div>
         );
       })}
