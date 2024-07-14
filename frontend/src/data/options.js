@@ -8,7 +8,7 @@ const locationOptionsIntero = [
     ["Imbottigliatore PET 1L", "Imbottigliatore PET 0.5L", "Imbottigliatore Tetra-Pak 1L", "Imbottigliatore Tetra-Pak 0.5L"],
     ["Cella frigorifera A", "Cella frigorifera B", "Cella frigorifera C", "Cella frigorifera D"],
     ["PQ040FT(R)", "AB123CD(R)", "EF456GH(R)", "IL789MN(R)", "OP012QR(R)", "ST345UV(R)"],
-    ["Pam Panorama Via Irnerio", "Coop 3.0 Bologna", "Famila Bologna", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
+    ["Pam Panorama Via Irnerio", "Famila Savignano", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
   ];
 
   const locationOptionsLC = [
@@ -21,7 +21,7 @@ const locationOptionsIntero = [
     ["Imbottigliatore PET 1L", "Imbottigliatore PET 0.5L", "Imbottigliatore Tetra-Pak 1L", "Imbottigliatore Tetra-Pak 0.5L"],
     ["Magazzino A", "Magazzino B", "Magazzino C", "Magazzino D"],
     ["WX789YZ", "JK456LM", "NO123PQ", "RS789TU", "VW234XY"],
-    ["Pam Panorama Via Irnerio", "Coop 3.0 Bologna", "Famila Bologna", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
+    ["Pam Panorama Via Irnerio", "Famila Savignano", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
   ];
 
   export {locationOptionsIntero, locationOptionsLC};
