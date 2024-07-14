@@ -7,7 +7,6 @@
  */
 
     const measureTemperatures = () => {
-
         const generateTravelLength = () => {
             const min = 60;
             const max = 3600;
@@ -16,7 +15,6 @@
 
         const frames = generateTravelLength();
         const temperatures = [];
-
         for (let i = 0; i < frames; i++) {
             const random = Math.random();
             if (random < 0.999) {
@@ -33,6 +31,7 @@
     const checkTravel = (address) => {
         // In situazione reale utilizzare address per recuperare l'array delle temperature del lotto
         const temperatures = measureTemperatures();
+        // API
         return (temperatures.every(temp => temp <= 10));
     };
     

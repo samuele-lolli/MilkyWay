@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Table, Text } from '@mantine/core';
+import { Table, Text, Badge } from '@mantine/core';
 
 const CompletedSteps = ({ allSteps }) => {
   const isDateInitialized = (timestamp) => {
@@ -44,10 +44,11 @@ const CompletedSteps = ({ allSteps }) => {
         const failedIndex = steps.findIndex(step => step.failed);
         return (
           <div key={lotNumber}>
-            <h3>Lotto {Number(lotNumber)}</h3>
-            <Text mb="md">
-              Stato del lotto: <Text component="span" fw={700} c={getLotStatus(steps).color}>{getLotStatus(steps).text}</Text>
-            </Text>
+            <h3 style={{ display: 'flex', alignItems: 'center'}}>
+              Lotto {Number(lotNumber)}{' '}
+              <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={getLotStatus(steps).color}>{getLotStatus(steps).text}</Badge>{' '}
+              <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={isIntero ? 'blue' : 'green'}>{isIntero ? 'Latte Intero' : 'Lunga Conservazione'}</Badge>
+            </h3>
             <table>
               <thead>
                 <tr>
@@ -64,11 +65,11 @@ const CompletedSteps = ({ allSteps }) => {
                   <tr key={index}>
                     <td>{step[0]}</td>
                     <td>
-                        {index === 1 || index === 5 || (index === 7 && step[0] === 'Stoccaggio refrigerato') || (index === 8 && step[0] === 'Distribuzione refrigerata') ? (
-                  "Sensore di temperatura"
-                        ) : (
-                          step[1] === '0x0000000000000000000000000000000000000000' ? 'Non assegnato' : step[1]
-                        )}
+                      {index === 1 || index === 5 || (index === 7 && step[0] === 'Stoccaggio refrigerato') || (index === 8 && step[0] === 'Distribuzione refrigerata') ? (
+                        "Sensore di temperatura"
+                      ) : (
+                        step[1] === '0x0000000000000000000000000000000000000000' ? 'Non assegnato' : step[1]
+                      )}
                     </td>
                     <td>{failedIndex !== -1 && index > failedIndex ? '-' : (step.failed ? 'Fallito' : (step[2] ? 'Completato' : 'In corso'))}</td>
                     <td>{isDateInitialized(step[3]) ? new Date(parseInt(step[3]) * 1000).toLocaleString() : 'Non iniziato'}</td>

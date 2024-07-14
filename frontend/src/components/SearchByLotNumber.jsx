@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Input, CloseButton, Table, Text, ActionIcon } from '@mantine/core';
+import { Input, CloseButton, Table, Text, ActionIcon, Badge } from '@mantine/core';
 import { IconSearch, IconRefresh } from '@tabler/icons-react';
 import { useMantineTheme } from '@mantine/core';
 
@@ -120,7 +120,7 @@ const SearchByLotNumber = ({ allSteps }) => {
             <>
               <p>Risultati di ricerca per il lotto numero <b>{searchLotNumber}</b></p>
               <Text>
-                Stato del lotto: <Text component="span" fw={700} c={getLotStatus().color}>{getLotStatus().text}</Text>
+                <Badge color={getLotStatus().color}>{getLotStatus().text}</Badge>
               </Text>
               <table>
                 <thead>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, TextInput, Button, CheckIcon, Text, Select } from '@mantine/core';
+import { Table, TextInput, Button, CheckIcon, Text, Select, Badge } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
 import { checkPasteurization } from '../simulation/pasteurizerSim';
@@ -9,12 +9,13 @@ import { checkStorage } from '../simulation/storageSim';
 import { checkShipping } from '../simulation/shippingSim';
 import { locationOptionsIntero, locationOptionsLC } from '../data/options';
 
-
 const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, isIntero, updateState, role, isFailed }) => {
   const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
   const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   const [actualContract, setActualContract] = useState(null);
-  const [inputErrors, setInputErrors] = useState(Array(steps.length).fill(false)); // Stato per gli errori
+  const [inputErrors, setInputErrors] = useState(Array(steps.length).fill(false)); // Stato per gli errori di input
+  const [isSaveButtonVisible, setIsSaveButtonVisible] = useState(false); // Stato per la visibilità del pulsante "Salva"
+  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
     const getActualContract = async () => {
@@ -29,6 +30,27 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
   const handleKeyPress = async (e, index) => {
     if (e.key === 'Enter') {
       await assignSupervisor(index);
+    }
+  };
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+        },
+        {
+          enableHighAccuracy: true, // Richiede maggiore precisione
+          timeout: 10000, // Timeout dopo 10 secondi
+          maximumAge: 0 // Non usare una posizione vecchia
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
     }
   };
 
@@ -123,6 +145,44 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     }
   };
 
+  const handleCheckPasteurization = async (processContractAddress) => {
+    const result = checkPasteurization(processContractAddress);
+    if (result) {
+      await actualContract.methods.isTemperatureOK(result).send({ from: account });
+      await updateState();
+    } else {
+      toast.error("Il processo di pastorizzazione del lotto non è andato a buon fine");
+    }
+  };
+
+  const handleCheckSterilization = async (processContractAddress) => {
+    const result = checkSterilization(processContractAddress);
+    if (result) {
+      await actualContract.methods.isTemperatureOK(result).send({ from: account });
+      await updateState();
+    } else {
+      toast.error("Il processo di sterilizzazione del lotto non è andato a buon fine");
+    }
+  };
+
+  const handleCheckTravel = async (processContractAddress) => {
+    console.log("Travel temperature: ", checkTravel(processContractAddress));
+    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
+    await updateState();
+  };
+
+  const handleCheckStorage = async (processContractAddress) => {
+    console.log("Storage temperature: ", checkStorage(processContractAddress));
+    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
+    await updateState();
+  };
+
+  const handleCheckShipping = async (processContractAddress) => {
+    console.log("Shipping temperature: ", checkStorage(processContractAddress));
+    await actualContract.methods.isTemperatureOK(checkShipping(processContractAddress)).send({ from: account });
+    await updateState();
+  };
+
   const handleSupervisorChange = (e, index) => {
     const newAddresses = [...supervisorAddresses];
     newAddresses[index] = e.target.value;
@@ -131,6 +191,9 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     const newErrors = [...inputErrors];
     newErrors[index] = false; // Rimuove l'errore quando si richiede il focus
     setInputErrors(newErrors);
+
+    // Rendi visibile il pulsante "Salva" quando l'utente scrive qualcosa
+    setIsSaveButtonVisible(true);
   };
 
   useEffect(() => {
@@ -171,6 +234,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
         const supervisors = supervisorAddresses.filter(address => address.trim() !== '');
         console.log("Supervisori validi:", supervisors);
         await actualContract.methods.assignSupervisors(supervisors).send({ from: account });
+      setIsSaveButtonVisible(false);
         await updateState();
         toast.success("Supervisori assegnati con successo");
       } else {
@@ -183,7 +247,10 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   return (
     <div style={{ marginTop: '20px' }}>
-        <label style={{ fontSize: '20px', display: 'inline-block', color: Boolean(isIntero) ? '#497DAC' : 'green' }}><b>Lotto {String(lotNumber)}</b></label>
+      <label style={{ fontSize: '20px', display: 'flex', alignItems: 'center'}}>
+        <b>Lotto {String(lotNumber)}</b>{' '}
+        <Badge color={isIntero ? '#497DAD' : 'green'} style={{ marginLeft: '10px', fontSize: '10px'  }}>{isIntero ? 'Intero' : 'Lunga Conservazione'}</Badge>
+      </label>
       <form onSubmit={handleSaveSupervisors}>
         <table>
           <thead>
@@ -260,7 +327,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
             ))}
           </tbody>
         </table>
-        {supervisorAddresses.some((address) => address === '0x0000000000000000000000000000000000000000') && (
+        {isSaveButtonVisible && (
           <Button 
             type="submit" 
             variant="dark" 
@@ -268,14 +335,19 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
             size="md" 
             radius="xl" 
             style={{ width: '100%' }} 
-            disabled={supervisorAddresses.some((address, index) => 
-              address.trim() === '' && !( index === 1 || index === 5 || (index === 7 && Boolean(isIntero)) || (index === 8 && Boolean(isIntero)))
-            )}
           >
             Salva
           </Button>
         )}
       </form>
+      <Button onClick={getUserLocation}>Get User Location</Button>
+      {userLocation && (
+        <div>
+          <h2>User Location</h2>
+          <p>Latitude: {userLocation.latitude}</p>
+          <p>Longitude: {userLocation.longitude}</p>
+        </div>
+      )}
     </div>
   );
 };

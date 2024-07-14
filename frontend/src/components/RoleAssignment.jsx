@@ -132,7 +132,7 @@ const RoleAssignment = ({ contract, account }) => {
           </table>
         </Grid.Col>
         <Grid.Col span={4} style={{ paddingLeft: '20' }}>
-          <Card shadow="sm" padding="lg" style={{ padding: '20px', marginBottom: '20px' }}>
+          <Card shadow="lg" padding="lg" style={{ padding: '20px', marginBottom: '20px' }}>
             <Title order={5} style={{marginBottom: '10px'}}>Assegna Ruolo</Title>
             <div style={{ padding: '5px 0' }}>
               <TextInput
@@ -157,7 +157,7 @@ const RoleAssignment = ({ contract, account }) => {
               <Button radius="md" onClick={assignRole}>Salva</Button>
             </div>
           </Card>
-          <Card shadow="sm" padding="lg" style={{ padding: '20px' }}>
+          <Card shadow="lg" padding="lg" style={{ padding: '20px' }}>
             <Title order={5} style={{marginBottom: '10px', color: 'red'}}>Rimuovi Ruolo</Title>
             <div style={{ padding: '10px 0' }}>
               <TextInput
