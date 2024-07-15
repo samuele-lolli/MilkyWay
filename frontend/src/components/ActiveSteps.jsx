@@ -28,6 +28,12 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     getActualContract();
   }, [web3, processContractAddress]);
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+    }
+  };
+
   const handleLocationSelect = async (value, index) => {
     try {
       const newLocationInputs = [...locationInputs];
@@ -243,7 +249,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                         placeholder="Supervisor address"
                         value={supervisorAddresses[index] || ''}
                         onChange={(e) => handleSupervisorChange(e, index)}
-                        onkeydown="return event.key != 'Enter';"
+                        onKeyDown={handleKeyDown}
                         disabled={role !== '1'}
                       />
                     ) : (
