@@ -87,12 +87,12 @@ def create_route_map(start_point, end_points, names, colors, network_type='drive
             route_data_retailer.append(route_info)
 
     # Salvare la mappa in un file HTML
-    route_map_path = 'route_map.html'
+    route_map_path = '../output/route_map.html'
     route_map.save(route_map_path)
 
     # Salvare i dati in due file JSON
-    json_allevamenti_path = 'route_data_allevamenti.json'
-    json_retailer_path = 'route_data_retailer.json'
+    json_allevamenti_path = '../output/route_data_allevamenti.json'
+    json_retailer_path = '../output/route_data_retailer.json'
     
     with open(json_allevamenti_path, 'w') as json_file:
         json.dump(route_data_allevamenti, json_file, indent=4)

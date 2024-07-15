@@ -18,7 +18,7 @@ const SearchByLotNumber = ({ allSteps }) => {
     if (isFailed) {
       return {
         text: 'Fallito',
-        color: 'red'
+        color: '#A81C07'
       };
     }
     const isCompleted = filteredSteps.every(step => step[2]);

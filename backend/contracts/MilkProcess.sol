@@ -73,9 +73,6 @@ contract MilkProcess {
         require(msg.sender == step.supervisor, "Only assigned supervisor can complete the step");
         step.completed = true;
         step.endTime = block.timestamp;
-
-        require(isReasonableLocation(_location), "Location is not reasonable for this step");
-
         step.location = _location;
 
         currentStepIndex++;
@@ -120,8 +117,22 @@ contract MilkProcess {
         }
     }
 
-    function isReasonableLocation(string memory _location) internal pure returns (bool) {
-        return bytes(_location).length > 0;
+    function isLocationReasonable(bool valid) external {
+        Step storage step = steps[currentStepIndex];
+        if (valid){
+            step.completed = true;
+            step.endTime = block.timestamp;
+            step.location = "Procedure up to standards";
+            currentStepIndex++;
+            if (currentStepIndex < steps.length) {
+                steps[currentStepIndex].startTime = block.timestamp;
+            }
+        }else{
+            step.failed = true;
+            isFailed = true;
+            step.endTime = block.timestamp;
+            step.location = "Truck's location incoherent with farmer address";
+        }
     }
 
     function isProcessCompleted() external view returns (bool) {

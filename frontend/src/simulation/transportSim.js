@@ -17,8 +17,8 @@
         const temperatures = [];
         for (let i = 0; i < frames; i++) {
             const random = Math.random();
-            if (random < 0.999) {
-                // 99.9% di possibilità di essere minore o uguale a 10
+            if (random < 0.9999) {
+                // 99.99% di possibilità di essere minore o uguale a 10
                 temperatures.push(7 + Math.random() * 3); // Genera un numero tra 7 e 10
             } else {
                 // 0.01% di possibilità di essere maggiore di 10

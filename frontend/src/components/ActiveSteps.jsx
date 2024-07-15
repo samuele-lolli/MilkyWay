@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from "axios"
-import { TextInput, Button, Select, Badge } from '@mantine/core';
+import { LoadingOverlay, TextInput, Button, Select, Badge } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
 import { checkPasteurization } from '../simulation/pasteurizerSim';
@@ -10,13 +10,12 @@ import { checkStorage } from '../simulation/storageSim';
 import { checkShipping } from '../simulation/shippingSim';
 import { locationOptionsIntero, locationOptionsLC } from '../data/options';
 
-const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, isIntero, updateState, role, isFailed }) => {
+const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress, account, steps, currentStepIndex, lotNumber, isIntero, updateState, role, isFailed }) => {
   const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
   const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   const [actualContract, setActualContract] = useState(null);
   const [inputErrors, setInputErrors] = useState(Array(steps.length).fill(false));
   const [isSaveButtonVisible, setIsSaveButtonVisible] = useState(false); 
-  const [currentLocation, setCurrentLocation] = useState("");
 
   useEffect(() => {
     const getActualContract = async () => {
@@ -39,7 +38,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
       const newLocationInputs = [...locationInputs];
       newLocationInputs[index] = value;
       setLocationInputs(newLocationInputs);
-      setCurrentLocation(value);
       await completeStep(index, value); // Passa il valore selezionato direttamente
     } catch (error) {
       console.error("Error handling location select:", error);
@@ -49,7 +47,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   const completeStep = async (index, location) => {
     try {
-      console.log(location);
       if (isFailed) {
         throw new Error("Il processo è fallito e non può essere completato");
       }
@@ -58,10 +55,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
       }
       if (steps[index][1].toLowerCase() !== account.toLowerCase()) {
         throw new Error("Solo il supervisore assegnato può completare questo step");
-      }
-      const isReasonableLocation = true; 
-      if (!isReasonableLocation) {
-        throw new Error("La posizione non è ragionevole per questo step");
       }
       console.log("Completing step:", index, "with location:", location, "for process address:", processContractAddress);
       await actualContract.methods.completeStep(location).send({ from: account })
@@ -124,20 +117,32 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
   };
 
   const handleCheckTravel = async (processContractAddress) => {
-    console.log("Travel temperature: ", checkTravel(processContractAddress));
-    console.log(currentLocation);
+    const travelTemp = checkTravel(processContractAddress);
+    const steps = await actualContract.methods.getSteps().call();
 
-    const jsonBody = { loc: currentLocation };
+    const location = steps[0].location;
 
-    try {
-        const response = await axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody);
-        console.log(response);
-
-        // Esegui le chiamate ai metodi del contratto con await
-        await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
-        await updateState();
-    } catch (error) {
-        console.error("Error during the process:", error);
+    const jsonBody = { loc: location };
+    console.log(travelTemp);
+    if (travelTemp){
+      try {
+          setLoading(true)
+          const response = await axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody);
+          const data = Boolean(response.data);
+          console.log(data);
+          await actualContract.methods.isLocationReasonable(data).send({ from: account });
+          await updateState();
+          if (!data){
+            toast.error("The truck location wasn't validated");
+          }
+      } catch (error) {
+          console.error("Error during the process:", error);
+      } finally {
+          setLoading(false); // Hide loading overlay
+      }
+    } else {
+      await actualContract.methods.isTemperatureOK(travelTemp).send({ from: account });
+      await updateState();
     }
 };
 
@@ -179,33 +184,52 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
       for (let i = 0; i < supervisorAddresses.length; i++) {
         const supervisorAddress = supervisorAddresses[i].trim();
-        if (supervisorAddress !== '' && !web3.utils.isAddress(supervisorAddress)) {
+        if (supervisorAddress == '' && !(i === 1 || i === 5 || (i === 7 && Boolean(isIntero)) || (i === 8 && Boolean(isIntero)))) {
           newErrors[i] = true;
           allValid = false;
+          console.log('Empty');
         } else {
           newErrors[i] = false;
         }
       }
-
       setInputErrors(newErrors);
+      
+      if (allValid) {
+        for (let i = 0; i < supervisorAddresses.length; i++) {
+          const supervisorAddress = supervisorAddresses[i].trim();
+          if (!web3.utils.isAddress(supervisorAddress) && !(i === 1 || i === 5 || (i === 7 && Boolean(isIntero)) || (i === 8 && Boolean(isIntero)))) {
+            console.log('Not an address');
+            newErrors[i] = true;
+            allValid = false;
+          } else {
+
+            newErrors[i] = false;
+          }
+        }
+        setInputErrors(newErrors);
+      }
 
       if (allValid) {
         for (let i = 0; i < supervisorAddresses.length; i++) {
           const supervisorAddress = supervisorAddresses[i].trim();
-          if (supervisorAddress !== '') {
-            const supervisorRole = await factoryContract.methods.getRole(supervisorAddress).call();
-            if (supervisorRole.toString() !== '2') {
+          if (!(i === 1 || i === 5 || (i === 7 && Boolean(isIntero)) || (i === 8 && Boolean(isIntero))) ){
+            const addressRole = await factoryContract.methods.getRole(supervisorAddress).call();
+            if (addressRole.toString() !== '2') {
+              console.log('Not a supervisor');
               newErrors[i] = true;
               allValid = false;
             }
           }
         }
         setInputErrors(newErrors);
+      }
+      console.log(allValid);
+      if(allValid){
         // Rimuovi gli elementi vuoti dall'array
         const supervisors = supervisorAddresses.filter(address => address.trim() !== '');
         console.log("Supervisori validi:", supervisors);
         await actualContract.methods.assignSupervisors(supervisors).send({ from: account });
-      setIsSaveButtonVisible(false);
+        setIsSaveButtonVisible(false);
         await updateState();
         toast.success("Supervisori assegnati con successo");
       } else {

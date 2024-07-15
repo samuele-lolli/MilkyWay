@@ -5,7 +5,7 @@ import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';
 import SplashScreen from './components/SplashScreen';
 import RoleAssignment from './components/RoleAssignment';
-import { Title, Tabs, rem, Button, NumberInput, Group } from '@mantine/core';
+import { LoadingOverlay,Title, Tabs, rem, Button, NumberInput, Group } from '@mantine/core';
 import { IconSearch, IconHistory, IconUser, IconList } from '@tabler/icons-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -19,6 +19,7 @@ const App = () => {
   const [role, setRole] = useState(null);
   const [newInteroProcessCount, setNewInteroProcessCount] = useState(1);
   const [newLCProcessCount, setNewLCProcessCount] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
   const tabStyle = { padding: `${rem(6)} ${rem(18)}` };
@@ -66,6 +67,7 @@ const App = () => {
           processContract.methods.lotNumber().call(),
           processContract.methods.isIntero().call()
         ]);
+        console.log(steps);
         console.log(`Process ${address}:`, { steps, currentStepIndex, isCompleted, isFailed, lotNumber, isIntero });
         return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed, isIntero };
       }));
@@ -97,13 +99,14 @@ const App = () => {
 
   return (
     <div id='app'>
+      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} ></LoadingOverlay>
       {(role === '1' || role === '2' || role === '3') ? (
         <div>
           <ToastContainer />
           <div id='bar'>
             <Title id='title' style={{fontSize: '70px'}}>MilkyWay</Title>
           </div>
-            <Tabs color='#497DAD' variant="pills" style={{padding: '20px 25px'}} radius="lg" defaultValue="active">
+            <Tabs color='#69a0d7' variant="pills" style={{padding: '20px 25px'}} radius="lg" defaultValue="active">
               <Tabs.List style={{ gap: '10px' }}>
                 <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
                   <Title order={6}>Processi Attivi</Title>
@@ -154,6 +157,7 @@ const App = () => {
               </div>
               {processContracts.map((process) => (
                 <ActiveSteps
+                  setLoading = {setLoading}
                   key={process.address}
                   web3={web3}
                   factoryContract={factoryContract}
@@ -184,7 +188,7 @@ const App = () => {
             {role === '1' && (
               <Tabs.Panel value="roles">
                 <h2>Roles management center</h2>
-                <RoleAssignment contract={factoryContract} account={account} />
+                <RoleAssignment contract={factoryContract} account={account} updateState={() => updateState()}/>
               </Tabs.Panel>
             )}
           </Tabs>

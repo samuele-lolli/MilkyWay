@@ -3,7 +3,7 @@ import { TextInput, Button, Select, Table, Card, Grid, Text, Title } from '@mant
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const RoleAssignment = ({ contract, account }) => {
+const RoleAssignment = ({ contract, account, updateState}) => {
   const [address, setAddress] = useState('');
   const [role, setRole] = useState('');
   const [assignedRoles, setAssignedRoles] = useState([]);
@@ -58,6 +58,7 @@ const RoleAssignment = ({ contract, account }) => {
         return updatedRoles;
       });
       toast.success("Ruolo assegnato con successo");
+      await updateState();
     } catch (error) {
       setAssignError("Errore durante l'assegnazione del ruolo");
       toast.error(error.message);
@@ -152,13 +153,13 @@ const RoleAssignment = ({ contract, account }) => {
                 onChange={setRole}
               />
             </div>
-            {assignError && <Text color="red">{assignError}</Text>}
+            {assignError && <Text color="#A81C07">{assignError}</Text>}
             <div style={{ padding: '5px 0' }}>
               <Button radius="md" onClick={assignRole}>Salva</Button>
             </div>
           </Card>
           <Card shadow="lg" padding="lg" style={{ padding: '20px' }}>
-            <Title order={5} style={{marginBottom: '10px', color: 'red'}}>Rimuovi Ruolo</Title>
+            <Title order={5} style={{marginBottom: '10px', color: '#A81C07'}}>Rimuovi Ruolo</Title>
             <div style={{ padding: '10px 0' }}>
               <TextInput
                 placeholder="Indirizzo dell'account"
@@ -168,9 +169,9 @@ const RoleAssignment = ({ contract, account }) => {
                 onFocus={handleRemoveAddressFocus}
               />
             </div>
-            {removeError && <Text color="red">{removeError}</Text>}
+            {removeError && <Text color="#A81C07">{removeError}</Text>}
             <div style={{ padding: '5px 0' }}>
-              <Button radius="md" onClick={removeRole} color="red">Rimuovi</Button>
+              <Button radius="md" onClick={removeRole} color="#A81C07">Rimuovi</Button>
             </div>
           </Card>
         </Grid.Col>

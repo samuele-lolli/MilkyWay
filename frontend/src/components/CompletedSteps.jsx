@@ -11,7 +11,7 @@ const CompletedSteps = ({ allSteps }) => {
     if (isFailed) {
       return {
         text: 'Fallito',
-        color: 'red'
+        color: '#A81C07'
       };
     }
     const isCompleted = steps.every(step => step[2]);

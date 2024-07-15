@@ -86,7 +86,7 @@ def create_truck_route_map(start_point, destination_name, end_points, names, col
         folium.Marker(location=position, popup=f'Second {idx * update_interval}', icon=folium.Icon(color=color)).add_to(route_map)
 
     # Salvare la mappa in un file HTML
-    route_map_path = 'truck.html'
+    route_map_path = 'output/truck.html'
     route_map.save(route_map_path)
 
     # Salvare i dati del percorso in un file JSON
@@ -94,7 +94,7 @@ def create_truck_route_map(start_point, destination_name, end_points, names, col
         "points": [start_point] + car_positions + [end_point]
     }
 
-    json_path = 'truck_route_data.json'
+    json_path = 'output/truck_route_data.json'
     with open(json_path, 'w') as json_file:
         json.dump(route_info, json_file, indent=4)
 
