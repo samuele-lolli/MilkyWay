@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import axios from "axios"
 import { Table, TextInput, Button, CheckIcon, Text, Select, Badge } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
@@ -13,9 +14,9 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
   const [locationInputs, setLocationInputs] = useState(Array(steps.length).fill(''));
   const [supervisorAddresses, setSupervisorAddresses] = useState(Array(steps.length).fill(''));
   const [actualContract, setActualContract] = useState(null);
-  const [inputErrors, setInputErrors] = useState(Array(steps.length).fill(false)); // Stato per gli errori di input
-  const [isSaveButtonVisible, setIsSaveButtonVisible] = useState(false); // Stato per la visibilità del pulsante "Salva"
-  const [userLocation, setUserLocation] = useState(null);
+  const [inputErrors, setInputErrors] = useState(Array(steps.length).fill(false));
+  const [isSaveButtonVisible, setIsSaveButtonVisible] = useState(false); 
+  const [currentLocation, setCurrentLocation] = useState("");
 
   useEffect(() => {
     const getActualContract = async () => {
@@ -27,32 +28,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     getActualContract();
   }, [web3, processContractAddress]);
 
-  const handleKeyPress = async (e, index) => {
-    if (e.key === 'Enter') {
-      await assignSupervisor(index);
-    }
-  };
-
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ latitude, longitude });
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-        },
-        {
-          enableHighAccuracy: true, // Richiede maggiore precisione
-          timeout: 10000, // Timeout dopo 10 secondi
-          maximumAge: 0 // Non usare una posizione vecchia
-        }
-      );
-    } else {
-      console.error('Geolocation is not supported by this browser.');
-    }
-  };
 
   const assignSupervisor = async (index) => {
     try {
@@ -82,6 +57,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
       const newLocationInputs = [...locationInputs];
       newLocationInputs[index] = value;
       setLocationInputs(newLocationInputs);
+      setCurrentLocation(value);
       await completeStep(index, value); // Passa il valore selezionato direttamente
     } catch (error) {
       console.error("Error handling location select:", error);
@@ -167,6 +143,12 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   const handleCheckTravel = async (processContractAddress) => {
     console.log("Travel temperature: ", checkTravel(processContractAddress));
+    console.log(currentLocation)
+
+    const jsonBody = { loc: currentLocation };
+    axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody)
+        .then(response => console.log(response));
+  
     await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
     await updateState();
   };
@@ -278,7 +260,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
                         placeholder="Supervisor address"
                         value={supervisorAddresses[index] || ''}
                         onChange={(e) => handleSupervisorChange(e, index)}
-                        onKeyDown={(e) => handleKeyPress(e, index)}
+                        onkeydown="return event.key != 'Enter';"
                         disabled={role !== '1'}
                       />
                     ) : (
@@ -340,14 +322,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
           </Button>
         )}
       </form>
-      <Button onClick={getUserLocation}>Get User Location</Button>
-      {userLocation && (
-        <div>
-          <h2>User Location</h2>
-          <p>Latitude: {userLocation.latitude}</p>
-          <p>Longitude: {userLocation.longitude}</p>
-        </div>
-      )}
     </div>
   );
 };
