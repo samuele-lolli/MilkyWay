@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from "axios"
-import { Table, TextInput, Button, CheckIcon, Text, Select, Badge } from '@mantine/core';
+import { TextInput, Button, Select, Badge } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { getContract } from "../web3"
 import { checkPasteurization } from '../simulation/pasteurizerSim';
@@ -27,30 +27,6 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     }
     getActualContract();
   }, [web3, processContractAddress]);
-
-
-  const assignSupervisor = async (index) => {
-    try {
-      const supervisorAddress = supervisorAddresses[index].trim();
-      if (!web3.utils.isAddress(supervisorAddress)) {
-        throw new Error("Indirizzo del supervisore non valido");
-      }
-      console.log("Fetching role for supervisor address:", supervisorAddress);
-      const supervisorRole = await factoryContract.methods.getRole(supervisorAddress).call();
-      console.log("Supervisor role fetched:", supervisorRole);
-      if (supervisorRole.toString() !== '2') {
-        throw new Error("L'indirizzo non ha un ruolo di Supervisore");
-      }
-      console.log("Assigning supervisor:", supervisorAddress, "to step:", index);
-      await actualContract.methods.assignSupervisor(index, supervisorAddress).send({ from: account });
-      console.log("Supervisor assigned successfully");
-      await updateState();
-      toast.success("Supervisore assegnato con successo");
-    } catch (error) {
-      console.error("Error assigning supervisor:", error);
-      toast.error(error.message);
-    }
-  };
 
   const handleLocationSelect = async (value, index) => {
     try {
