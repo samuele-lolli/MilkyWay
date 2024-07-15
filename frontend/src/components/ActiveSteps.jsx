@@ -249,7 +249,7 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
     <div style={{ marginTop: '20px' }}>
       <label style={{ fontSize: '20px', display: 'flex', alignItems: 'center'}}>
         <b>Lotto {String(lotNumber)}</b>{' '}
-        <Badge color={isIntero ? '#497DAD' : 'green'} style={{ marginLeft: '10px', fontSize: '10px'  }}>{isIntero ? 'Intero' : 'Lunga Conservazione'}</Badge>
+        <Badge color={isIntero ? 'blue' : 'green'} style={{ marginLeft: '10px', fontSize: '10px'  }}>{isIntero ? 'Intero' : 'Lunga Conservazione'}</Badge>
       </label>
       <form onSubmit={handleSaveSupervisors}>
         <table>

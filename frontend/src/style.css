@@ -119,7 +119,9 @@ tr:last-child td:last-child {
 }
 
 #bar {
-    background: linear-gradient(to bottom, #497DAD, #77AFE8);
+    background-image: url('./assets/bar_bg.png');
+    background-size: cover;
+    background-position: center;
     width: auto;
     padding: 40px 25px;
     border-radius: 20px;

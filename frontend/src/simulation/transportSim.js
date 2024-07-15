@@ -21,7 +21,7 @@
                 // 99.9% di possibilità di essere minore o uguale a 10
                 temperatures.push(7 + Math.random() * 3); // Genera un numero tra 7 e 10
             } else {
-                // 0.1% di possibilità di essere maggiore di 10
+                // 0.01% di possibilità di essere maggiore di 10
                 temperatures.push(10 + Math.random() * 2); // Genera un numero tra 10 e 12
             }
         }

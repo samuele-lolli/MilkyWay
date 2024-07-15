@@ -31,10 +31,10 @@ const CompletedSteps = ({ allSteps }) => {
       groupedLots[lotNumber].push(step);
     });
 
-    return Object.entries(groupedLots).map(([lotNumber, steps, isIntero]) => ({
+    return Object.entries(groupedLots).map(([lotNumber, steps]) => ({
       lotNumber,
       steps,
-      isIntero,
+      isIntero: steps.some(step => step[0] === 'Stoccaggio refrigerato'),
     })).sort((a, b) => a.lotNumber - b.lotNumber);
   }, [allSteps]);
 
