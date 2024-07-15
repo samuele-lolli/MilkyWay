@@ -10,14 +10,8 @@ CORS(app, support_credentials=True)
 def transportSimulate():
     if request.is_json:
         data = request.get_json()
-        print(data)
-        
         loc_value = data.get("loc", "")
-
-        print(loc_value)
-    
         comando = ["python", "utils/truck.py", loc_value]
-        
         try:
             result = subprocess.run(comando)
             return jsonify({"message": "Hello, World!"})

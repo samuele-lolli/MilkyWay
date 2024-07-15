@@ -143,15 +143,22 @@ const ActiveSteps = ({ web3, factoryContract, processContractAddress, account, s
 
   const handleCheckTravel = async (processContractAddress) => {
     console.log("Travel temperature: ", checkTravel(processContractAddress));
-    console.log(currentLocation)
+    console.log(currentLocation);
 
     const jsonBody = { loc: currentLocation };
-    axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody)
-        .then(response => console.log(response));
-  
-    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
-    await updateState();
-  };
+
+    try {
+        const response = await axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody);
+        console.log(response);
+
+        // Esegui le chiamate ai metodi del contratto con await
+        await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
+        await updateState();
+    } catch (error) {
+        console.error("Error during the process:", error);
+    }
+};
+
 
   const handleCheckStorage = async (processContractAddress) => {
     console.log("Storage temperature: ", checkStorage(processContractAddress));
