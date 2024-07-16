@@ -5,12 +5,13 @@ import CompletedSteps from './components/CompletedSteps';
 import ActiveSteps from './components/ActiveSteps';
 import SplashScreen from './components/SplashScreen';
 import RoleAssignment from './components/RoleAssignment';
-import { LoadingOverlay,Title, Tabs, rem, Button, NumberInput, Group } from '@mantine/core';
+import { LoadingOverlay, Title, Tabs, rem, Button, NumberInput, Group } from '@mantine/core';
 import { IconSearch, IconHistory, IconUser, IconList } from '@tabler/icons-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
+  // State variables
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
   const [factoryContract, setFactoryContract] = useState(null);
@@ -24,6 +25,7 @@ const App = () => {
   const iconStyle = { width: rem(16), height: rem(16), marginRight: rem(8) };
   const tabStyle = { padding: `${rem(6)} ${rem(18)}` };
 
+  // Initialize web3 and contract
   useEffect(() => {
     const init = async () => {
       try {
@@ -31,9 +33,11 @@ const App = () => {
         const accounts = await web3Instance.eth.getAccounts();
         const factoryContractInstance = await getContract(web3Instance, 'MilkProcessFactory');
         const accountRole = await factoryContractInstance.methods.getRole(accounts[0]).call();
+
         setWeb3(web3Instance);
         setAccount(accounts[0]);
         setFactoryContract(factoryContractInstance);
+
         if (String(accountRole) !== '0') {
           setRole(String(accountRole));
         }
@@ -45,12 +49,14 @@ const App = () => {
     init();
   }, []);
 
+  // Update state when web3 or factoryContract changes
   useEffect(() => {
     if (web3 && factoryContract) {
       updateState(factoryContract);
     }
   }, [web3, factoryContract]);
 
+  // Function to update state with contract data
   const updateState = useCallback(async () => {
     try {
       if (!web3) {
@@ -67,9 +73,16 @@ const App = () => {
           processContract.methods.lotNumber().call(),
           processContract.methods.isIntero().call()
         ]);
-        console.log(steps);
-        console.log(`Process ${address}:`, { steps, currentStepIndex, isCompleted, isFailed, lotNumber, isIntero });
-        return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed, isIntero };
+
+        return {
+          address,
+          lotNumber,
+          steps,
+          currentStepIndex: parseInt(currentStepIndex),
+          isCompleted,
+          isFailed,
+          isIntero
+        };
       }));
 
       setProcessContracts(allProcesses.filter(p => !p.isCompleted && !p.isFailed));
@@ -77,21 +90,15 @@ const App = () => {
     } catch (error) {
       toast.error("Errore durante l'aggiornamento dello stato: " + error.message);
     }
-    console.log("Update over");
   }, [web3, factoryContract]);
 
+  // Function to create new processes
   const createNewProcesses = async (isIntero) => {
     try {
-      if(isIntero){
-        await factoryContract.methods.createNewProcess(newInteroProcessCount, true).send({ from: account });
-        await updateState();
-        toast.success(`Creati ${newInteroProcessCount} nuovi processi per il latte intero`);
-      }else{
-        await factoryContract.methods.createNewProcess(newLCProcessCount, false).send({ from: account });
-        await updateState();
-        toast.success(`Creati ${newLCProcessCount} nuovi processi per il latte a lunga conservazione`);
-      }
-      
+      const processCount = isIntero ? newInteroProcessCount : newLCProcessCount;
+      await factoryContract.methods.createNewProcess(processCount, isIntero).send({ from: account });
+      await updateState();
+      toast.success(`Creati ${processCount} nuovi processi per il ${isIntero ? 'latte intero' : 'latte a lunga conservazione'}`);
     } catch (error) {
       toast.error("Errore durante la creazione dei nuovi processi: " + error.message);
     }
@@ -99,96 +106,94 @@ const App = () => {
 
   return (
     <div id='app'>
-      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} ></LoadingOverlay>
+      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+      <ToastContainer />
       {(role === '1' || role === '2' || role === '3') ? (
         <div>
-          <ToastContainer />
           <div id='bar'>
-            <Title id='title' style={{fontSize: '70px'}}>MilkyWay</Title>
+            <Title id='title' style={{ fontSize: '70px' }}>MilkyWay</Title>
           </div>
-            <Tabs color='#69a0d7' variant="pills" style={{padding: '20px 25px'}} radius="lg" defaultValue="active">
-              <Tabs.List style={{ gap: '10px' }}>
-                <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
-                  <Title order={6}>Processi Attivi</Title>
+          <Tabs color='#69a0d7' variant="pills" style={{ padding: '20px 25px' }} radius="lg" defaultValue="active">
+            <Tabs.List style={{ gap: '10px' }}>
+              <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+                <Title order={6}>Processi Attivi</Title>
+              </Tabs.Tab>
+              <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+                <Title order={6}>Ricerca</Title>
+              </Tabs.Tab>
+              <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
+                <Title order={6}>Storico</Title>
+              </Tabs.Tab>
+              {role === '1' && (
+                <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
+                  <Title order={6}>Assegna Ruoli</Title>
                 </Tabs.Tab>
-                <Tabs.Tab value="search" leftSection={<IconSearch style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
-                  <Title order={6}>Ricerca</Title>
-                </Tabs.Tab>
-                <Tabs.Tab value="history" leftSection={<IconHistory style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
-                  <Title order={6}>Storico</Title>
-                </Tabs.Tab>
-                {role === '1' && (
-                  <Tabs.Tab value="roles" leftSection={<IconUser style={iconStyle} />} style={tabStyle}>
-                    <Title order={6}>Assegna Ruoli</Title>
-                  </Tabs.Tab>
-                )}
-              </Tabs.List>
+              )}
+            </Tabs.List>
             <Tabs.Panel value="active">
               <div style={{ marginTop: '20px' }}>
                 <h2>Active processes</h2>
-                  <div style={{display:'flex'}}>
                 {role === '1' && (
-                  <>
-                  <Group align="flex-end">
-                    <NumberInput
-                      value={newInteroProcessCount}
-                      onChange={(value) => setNewInteroProcessCount(value)}
-                      radius="md"
-                      min={1}
-                      max={10}
-                      style={{ maxWidth: '60px' }}
-                    />
-                    <Button radius="lg" onClick={()=> createNewProcesses(true)} style={{ marginLeft: '10px' }}>Crea Nuovi Processi (Latte Intero)</Button>
-                  </Group>
-                  <Group align="flex-end">
-                    <NumberInput
-                      value={newLCProcessCount}
-                      onChange={(value) => setNewLCProcessCount(value)}
-                      radius="md"
-                      min={1}
-                      max={10}
-                      style={{ maxWidth: '60px', marginLeft: '40px'}}
-                    />
-                    <Button radius="lg" color="teal" onClick={()=> createNewProcesses(false)} style={{ marginLeft: '10px' }}> Crea Nuovi Processi (Latte a Lunga Conservazione)</Button>
-                  </Group>
-                  </>
+                  <div style={{ display: 'flex', marginBottom: '20px' }}>
+                    <Group align="flex-end">
+                      <NumberInput
+                        value={newInteroProcessCount}
+                        onChange={setNewInteroProcessCount}
+                        radius="md"
+                        min={1}
+                        max={10}
+                        style={{ maxWidth: '60px' }}
+                      />
+                      <Button radius="lg" onClick={() => createNewProcesses(true)} style={{ marginLeft: '10px' }}>
+                        Crea Nuovi Processi (Latte Intero)
+                      </Button>
+                    </Group>
+                    <Group align="flex-end" style={{ marginLeft: '40px' }}>
+                      <NumberInput
+                        value={newLCProcessCount}
+                        onChange={setNewLCProcessCount}
+                        radius="md"
+                        min={1}
+                        max={10}
+                        style={{ maxWidth: '60px' }}
+                      />
+                      <Button radius="lg" color="teal" onClick={() => createNewProcesses(false)} style={{ marginLeft: '10px' }}>
+                        Crea Nuovi Processi (Latte a Lunga Conservazione)
+                      </Button>
+                    </Group>
+                  </div>
                 )}
-                </div>
+                {processContracts.map((process) => (
+                  <ActiveSteps
+                    setLoading={setLoading}
+                    key={process.address}
+                    web3={web3}
+                    factoryContract={factoryContract}
+                    processContractAddress={process.address}
+                    account={account}
+                    steps={process.steps}
+                    currentStepIndex={process.currentStepIndex}
+                    lotNumber={process.lotNumber}
+                    isIntero={process.isIntero}
+                    updateState={updateState}
+                    role={role}
+                    isFailed={process.isFailed}
+                  />
+                ))}
               </div>
-              {processContracts.map((process) => (
-                <ActiveSteps
-                  setLoading = {setLoading}
-                  key={process.address}
-                  web3={web3}
-                  factoryContract={factoryContract}
-                  processContractAddress={process.address}
-                  account={account}
-                  steps={process.steps}
-                  currentStepIndex={process.currentStepIndex}
-                  lotNumber={process.lotNumber}
-                  isIntero={process.isIntero}
-                  updateState={() => updateState()}
-                  role={role}
-                  isFailed={process.isFailed} // Passa lo stato di fallimento
-                />
-              ))}
             </Tabs.Panel>
             <Tabs.Panel value="search">
               <h2>Search by Lot Number</h2>
-              <SearchByLotNumber
-                allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
-              />
+              <SearchByLotNumber allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)} />
             </Tabs.Panel>
             <Tabs.Panel value="history">
               <h2>Storico</h2>
-              <CompletedSteps
-                allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
-              />
+              <CompletedSteps allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)} />
             </Tabs.Panel>
             {role === '1' && (
               <Tabs.Panel value="roles">
                 <h2>Roles management center</h2>
-                <RoleAssignment contract={factoryContract} account={account} updateState={() => updateState()}/>
+                <RoleAssignment contract={factoryContract} account={account} updateState={updateState} />
               </Tabs.Panel>
             )}
           </Tabs>
