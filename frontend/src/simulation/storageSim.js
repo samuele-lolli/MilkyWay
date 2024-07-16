@@ -22,10 +22,10 @@
         for (let i = 0; i < frames; i++) {
             const random = Math.random();
             if (random < 0.999) {
-                // 99.9% di possibilità di essere minore o uguale a 4°C
-                temperatures.push(1 + Math.random() * 3); // Genera un numero tra 1 e 4
+                // 99.99% di possibilità di essere minore o uguale a 4°C
+                temperatures.push(1 + Math.random() * 2); // Genera un numero tra 1 e 4
             } else {
-                // 0.1% di possibilità di essere maggiore di 4°C
+                // 0.01% di possibilità di essere maggiore di 4°C
                 temperatures.push(4 + Math.random() * 2); // Genera un numero tra 4 e 6
             }
         }

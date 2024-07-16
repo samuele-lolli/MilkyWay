@@ -34,14 +34,34 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
   };
 
   const handleLocationSelect = async (value, index) => {
-    try {
-      const newLocationInputs = [...locationInputs];
-      newLocationInputs[index] = value;
-      setLocationInputs(newLocationInputs);
-      await completeStep(index, value); // Passa il valore selezionato direttamente
-    } catch (error) {
-      console.error("Error handling location select:", error);
-      toast.error("Errore nel completare lo step con la posizione selezionata");
+
+    if (index == 9) {
+      const jsonBody = { loc: value };
+      try{
+        setLoading(true)
+          const response = await axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody);
+          const data = Boolean(response.data);
+          console.log(data);
+          await actualContract.methods.isLocationReasonable(data, value).send({ from: account });
+          await updateState();
+          if (!data){
+            toast.error("The truck location wasn't validated");
+          }
+      } catch (error) {
+        console.error("Error handling location select:", error);
+        toast.error("Errore nel completare lo step con la posizione selezionata");
+      }
+      setLoading(false);
+    }else {
+      try {
+        const newLocationInputs = [...locationInputs];
+        newLocationInputs[index] = value;
+        setLocationInputs(newLocationInputs);
+        await completeStep(index, value); // Passa il valore selezionato direttamente
+      } catch (error) {
+        console.error("Error handling location select:", error);
+        toast.error("Errore nel completare lo step con la posizione selezionata");
+      }
     }
   };
 
@@ -121,7 +141,6 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
     const steps = await actualContract.methods.getSteps().call();
 
     const location = steps[0].location;
-
     const jsonBody = { loc: location };
     console.log(travelTemp);
     if (travelTemp){
@@ -130,8 +149,9 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
           const response = await axios.post('http://127.0.0.1:5000/transportSimulate', jsonBody);
           const data = Boolean(response.data);
           console.log(data);
-          await actualContract.methods.isLocationReasonable(data).send({ from: account });
+          await actualContract.methods.isLocationReasonable(data, location).send({ from: account });
           await updateState();
+          setLoading(false)
           if (!data){
             toast.error("The truck location wasn't validated");
           }
@@ -241,7 +261,7 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
   };
 
   return (
-    <div style={{ marginTop: '20px' }}>
+    <div style={{ marginTop: '20px', marginLeft: '20px', maxWidth: '80%'}}>
       <label style={{ fontSize: '20px', display: 'flex', alignItems: 'center'}}>
         <b>Lotto {String(lotNumber)}</b>{' '}
         <Badge color={isIntero ? 'blue' : 'green'} style={{ marginLeft: '10px', fontSize: '10px'  }}>{isIntero ? 'Intero' : 'Lunga Conservazione'}</Badge>
@@ -296,7 +316,9 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
                   ) : Boolean(isIntero) && index === 7 && currentStepIndex === 7 ? (
                     <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckStorage(processContractAddress)}>Simula Stoccaggio</Button>
                   ) : (index === 8 && Boolean(isIntero) && currentStepIndex == 8) ? (
-                    <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckShipping(processContractAddress)}>Simula consegna</Button>
+                    <div>
+                      <Button variant="dark" color="teal" size="xs" style={{color: 'white'}} radius="xl" onClick={() => handleCheckShipping(processContractAddress)}>Simula consegna</Button>
+                    </div>
                   ) : (
                     index <= currentStepIndex && !step[2] ? (
                       <Select
@@ -314,7 +336,9 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
                 {role === '2' && (
                 <td style={{ textAlign: 'center' }}>
                   {!step[2] && step[1] !== '0x0000000000000000000000000000000000000000' && index === currentStepIndex && steps[index][1].toLowerCase() === account.toLowerCase() && (
-                    <Button variant="dark" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>    
+                    <div>
+                      <Button variant="dark" color="red" size="xs" radius="xl" onClick={() => failStep(index)}>Dichiara Fallito</Button>    
+                    </div>
                   )}
                 </td>
               )}

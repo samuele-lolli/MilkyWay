@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TextInput, Button, Select, Table, Card, Grid, Text, Title } from '@mantine/core';
+import { Group, TextInput, Button, Select, Card, Text, Title, Radio } from '@mantine/core';
 import { toast } from 'react-toastify';
+import { IconTrashXFilled } from '@tabler/icons-react';
 import 'react-toastify/dist/ReactToastify.css';
 
 const RoleAssignment = ({ contract, account, updateState}) => {
@@ -11,13 +12,10 @@ const RoleAssignment = ({ contract, account, updateState}) => {
   const [assignError, setAssignError] = useState('');
   const [removeError, setRemoveError] = useState('');
   const [filter, setFilter] = useState('all'); // New state for the filter
+  const [action, setAction] = useState('assign'); // New state for the action
 
   const handleAddressFocus = useCallback(() => {
     setAssignError('');
-  }, []);
-
-  const handleRemoveAddressFocus = useCallback(() => {
-    setRemoveError('');
   }, []);
 
   useEffect(() => {
@@ -37,6 +35,11 @@ const RoleAssignment = ({ contract, account, updateState}) => {
 
     fetchAssignedRoles();
   }, [contract]);
+
+  const handleClick = async (address) => {
+    setRemoveAddress(address);
+    removeRole();
+  };
 
   const assignRole = useCallback(async () => {
     try {
@@ -103,79 +106,47 @@ const RoleAssignment = ({ contract, account, updateState}) => {
   });
 
   return (
-    <div>
-      <Grid gutter="lg">
-        <Grid.Col span={8} style={{ paddingRight: '20px' }}>
-          <Select
-            label="Filtra per ruolo"
-            placeholder="Seleziona un filtro"
+    <div style={{ marginLeft: '20px', maxWidth: '80%'}} >
+        <div id='assign-group'>
+          <TextInput
+            placeholder="Indirizzo dell'account"
             radius="md"
-            data={filterOptions}
-            value={filter}
-            onChange={setFilter}
-            defaultValue="all"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            onFocus={handleAddressFocus}
+            style={{ minWidth: '32%'}}
           />
-          <table>
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Ruolo</th>
+            <Select
+              placeholder="Ruolo"
+              radius="md"
+              data={roleOptions}
+              value={role}
+              defaultValue="1"
+              onChange={(value) => setRole(value || 'all')}
+              style={{ maxWidth: '10%', marginLeft:'20px'}}
+            />
+            <Button radius="md" style={{ maxWidth: '10%', marginLeft:'20px'}} onClick={assignRole}>Aggiungi</Button>
+            {assignError && <Text style={{ color: '#A81C07', marginLeft:'20px'}}>{assignError}</Text>}
+            
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Account</th>
+              <th>Ruolo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRoles.map((assignedRole, index) => (
+              <tr key={index}>
+                <td style={{textAlign:'center'}}><IconTrashXFilled color='#A81C07' onClick={() => handleClick(assignedRole.account)} style={{ cursor: 'pointer' }}/></td>
+                <td>{assignedRole.account}</td>
+                <td>{assignedRole.role === '1' ? 'Admin' : assignedRole.role === '2' ? 'Supervisor' : 'Operator'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredRoles.map((assignedRole, index) => (
-                <tr key={index}>
-                  <td>{assignedRole.account}</td>
-                  <td>{assignedRole.role === '1' ? 'Admin' : assignedRole.role === '2' ? 'Supervisor' : 'Operator'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Grid.Col>
-        <Grid.Col span={4} style={{ paddingLeft: '20' }}>
-          <Card shadow="lg" padding="lg" style={{ padding: '20px', marginBottom: '20px' }}>
-            <Title order={5} style={{marginBottom: '10px'}}>Assegna Ruolo</Title>
-            <div style={{ padding: '5px 0' }}>
-              <TextInput
-                placeholder="Indirizzo dell'account"
-                radius="md"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                onFocus={handleAddressFocus}
-              />
-            </div>
-            <div style={{ padding: '5px 0' }}>
-              <Select
-                placeholder="Seleziona un ruolo"
-                radius="md"
-                data={roleOptions}
-                value={role}
-                onChange={setRole}
-              />
-            </div>
-            {assignError && <Text color="#A81C07">{assignError}</Text>}
-            <div style={{ padding: '5px 0' }}>
-              <Button radius="md" onClick={assignRole}>Salva</Button>
-            </div>
-          </Card>
-          <Card shadow="lg" padding="lg" style={{ padding: '20px' }}>
-            <Title order={5} style={{marginBottom: '10px', color: '#A81C07'}}>Rimuovi Ruolo</Title>
-            <div style={{ padding: '10px 0' }}>
-              <TextInput
-                placeholder="Indirizzo dell'account"
-                radius="md"
-                value={removeAddress}
-                onChange={(e) => setRemoveAddress(e.target.value)}
-                onFocus={handleRemoveAddressFocus}
-              />
-            </div>
-            {removeError && <Text color="#A81C07">{removeError}</Text>}
-            <div style={{ padding: '5px 0' }}>
-              <Button radius="md" onClick={removeRole} color="#A81C07">Rimuovi</Button>
-            </div>
-          </Card>
-        </Grid.Col>
-      </Grid>
+            ))}
+          </tbody>
+        </table>
     </div>
   );
 };

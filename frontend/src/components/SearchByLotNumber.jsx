@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Input, CloseButton, Table, Text, ActionIcon, Badge } from '@mantine/core';
-import { IconSearch, IconRefresh } from '@tabler/icons-react';
+import { Input, Text, Badge } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
 import { useMantineTheme } from '@mantine/core';
 
 const SearchByLotNumber = ({ allSteps }) => {
@@ -39,80 +39,31 @@ const SearchByLotNumber = ({ allSteps }) => {
     }
   }, [allSteps]);
 
-  const handleClear = useCallback(() => {
-    setSearchLotNumber('');
-    setFilteredSteps([]);
-  }, []);
-
-  const handleRefresh = useCallback(() => {
-    if (searchLotNumber) {
-      const filtered = allSteps.filter(step => String(step[6]) === searchLotNumber);
-      setFilteredSteps(filtered);
-    }
-  }, [allSteps, searchLotNumber]);
-
   const inputStyles = {
     input: {
       borderColor: theme.colors.brand[6],
       borderWidth: '2px',
       maxWidth: '500px',
-      paddingRight: '80px'
-    },
-    wrapper: {
-      maxWidth: '500px',
-      position: 'relative'
-    }
-  };
-
-  const actionButtonStyles = {
-    position: 'absolute',
-    right: '10px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    zIndex: 1
-  };
-
-  const actionIconStyles = {
-    color: theme.colors.gray[6],
-    '&:hover': {
-      backgroundColor: theme.colors.gray[0]
     }
   };
 
   return (
-    <div>
-      <div style={inputStyles.wrapper}>
-        <Input
-          type="text"
-          leftSection={<IconSearch size={16} />}
-          radius="md"
-          value={searchLotNumber}
-          onChange={handleSearch}
-          mt="md"
-          placeholder="Inserisci il numero di lotto"
-          styles={{ input: inputStyles.input }}
-        />
-        {searchLotNumber && (
-          <>
-            <ActionIcon
-              aria-label="Refresh search"
-              onClick={handleRefresh}
-              style={{ ...actionButtonStyles, right: '40px' }}
-              variant="subtle"
-              color="gray"
-              sx={actionIconStyles}
-            >
-              <IconRefresh size={16} />
-            </ActionIcon>
-            <CloseButton
-              aria-label="Clear input"
-              onClick={handleClear}
-              style={actionButtonStyles}
-              variant="subtle"
-              color="gray"
-            />
-          </>
-        )}
+    <div style={{ marginTop: '20px', marginLeft: '20px', maxWidth:'80%' }} >
+      <div style={{ position: 'relative' }}>
+      <Input
+        type="text"
+        leftSection={<IconSearch size={16} />}
+        radius="md"
+        value={searchLotNumber}
+        onChange={handleSearch}
+        mt="md"
+        placeholder="Inserisci il numero di lotto"
+        styles={{
+          input: {
+            ...inputStyles.input,// Assicurati che il contenitore input sia relativo
+          }
+        }}
+      />
       </div>
       {searchLotNumber && (
         <div>

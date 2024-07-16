@@ -133,3 +133,10 @@ tr:last-child td:last-child {
     stroke: #497DAD 2px;
     padding: 20px;
 }
+
+#assign-group{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+

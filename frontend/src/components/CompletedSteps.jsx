@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo } from 'react';
-import { Table, Text, Badge } from '@mantine/core';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Select, Badge } from '@mantine/core';
 
 const CompletedSteps = ({ allSteps }) => {
+  const [filter, setFilter] = useState('all'); // New state for the filter
+
   const isDateInitialized = (timestamp) => {
     return new Date(parseInt(timestamp) * 1000).getTime() > new Date('1970-01-01T00:00:00Z').getTime();
   };
@@ -38,9 +40,30 @@ const CompletedSteps = ({ allSteps }) => {
     })).sort((a, b) => a.lotNumber - b.lotNumber);
   }, [allSteps]);
 
+  const filteredLots = useMemo(() => {
+    if (filter === 'all') return lots;
+    const isInteroFilter = filter === '1';
+    return lots.filter(lot => lot.isIntero === isInteroFilter);
+  }, [lots, filter]);
+
+  const filterOptions = [
+    { value: 'all', label: 'Tutti' },
+    { value: '1', label: 'Intero' },
+    { value: '2', label: 'Lunga Conservazione' }
+  ];
+
   return (
-    <div>
-      {lots.map(({ lotNumber, steps, isIntero }) => {
+    <div style={{ marginTop: '10px', marginLeft: '20px', maxWidth: '80%' }}>
+      <Select
+        placeholder="Seleziona un filtro"
+        radius="md"
+        style={{maxWidth: '500px'}}
+        data={filterOptions}
+        value={filter}
+        onChange={(value) => setFilter(value || 'all')}
+        defaultValue="all"
+      />
+      {filteredLots.map(({ lotNumber, steps, isIntero }) => {
         const failedIndex = steps.findIndex(step => step.failed);
         return (
           <div key={lotNumber}>

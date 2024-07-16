@@ -117,12 +117,16 @@ contract MilkProcess {
         }
     }
 
-    function isLocationReasonable(bool valid) external {
+    function isLocationReasonable(bool valid, string memory _location) external {
         Step storage step = steps[currentStepIndex];
         if (valid){
             step.completed = true;
             step.endTime = block.timestamp;
-            step.location = "Procedure up to standards";
+            if (currentStepIndex == 9) {
+                step.location = _location;
+            }else{
+                step.location = "Procedure up to standards";
+            }
             currentStepIndex++;
             if (currentStepIndex < steps.length) {
                 steps[currentStepIndex].startTime = block.timestamp;
@@ -131,7 +135,7 @@ contract MilkProcess {
             step.failed = true;
             isFailed = true;
             step.endTime = block.timestamp;
-            step.location = "Truck's location incoherent with farmer address";
+            step.location = "Truck's location incoherent with destination address";
         }
     }
 
