@@ -30,6 +30,11 @@ The [mobile app](https://github.com/gbekss/MilkChain-Consumer) uses React-Native
 
 ![Project architecture](https://github.com/samuele-lolli/MilkChain/assets/58303470/bc31109b-aace-400c-9fa5-7174c5158e6c)
 
+### Flow
+<img width="875" alt="Screenshot 2024-07-16 at 19 08 42" src="https://github.com/user-attachments/assets/b418464c-f25c-4ea8-bc27-2e6a4a61654f">
+
+
+
 ### Installation & Setup
 Requires:
 * Node.js
