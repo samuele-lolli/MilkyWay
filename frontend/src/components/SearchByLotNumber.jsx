@@ -60,7 +60,7 @@ const SearchByLotNumber = ({ allSteps }) => {
   };
 
   return (
-    <div style={{ marginTop: '20px', marginLeft: '20px', maxWidth:'80%' }} >
+    <div style={{ marginTop: '20px',  maxWidth:'80%' }} >
       <div style={{ position: 'relative' }}>
       <Input
         type="text"
@@ -81,10 +81,13 @@ const SearchByLotNumber = ({ allSteps }) => {
         <div>
           {filteredSteps.length > 0 ? (
             <>
-              <p>Risultati di ricerca per il lotto numero <b>{searchLotNumber}</b></p>
-              <Text>
-                <Badge color={getLotStatus().color}>{getLotStatus().text}</Badge>
-              </Text>
+              <h3 style={{ display: 'flex', alignItems: 'center' }}>
+                Lotto {Number(searchLotNumber)}
+                <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={getLotStatus().color}>{getLotStatus().text}</Badge>
+                <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={filteredSteps[7][0] == "Stoccaggio refrigerato" ? 'blue' : 'green'}>
+                  {filteredSteps[7][0] == "Stoccaggio refrigerato" ? 'Latte Intero' : 'Lunga Conservazione'}
+                </Badge>
+              </h3>
               <table>
                 <thead>
                   <tr>

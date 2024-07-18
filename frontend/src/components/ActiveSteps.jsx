@@ -261,7 +261,7 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
   };
 
   return (
-    <div style={{ marginTop: '20px', marginLeft: '20px', maxWidth: '80%'}}>
+    <div style={{ marginTop: '20px', maxWidth: '80%'}}>
       <label style={{ fontSize: '20px', display: 'flex', alignItems: 'center'}}>
         <b>Lotto {String(lotNumber)}</b>{' '}
         <Badge color={isIntero ? 'blue' : 'green'} style={{ marginLeft: '10px', fontSize: '10px'  }}>{isIntero ? 'Intero' : 'Lunga Conservazione'}</Badge>

@@ -113,7 +113,7 @@ const App = () => {
           <div id='bar'>
             <Title id='title' style={{ fontSize: '70px' }}>MilkyWay</Title>
           </div>
-          <Tabs color='#69a0d7' variant="pills" style={{ padding: '20px 25px' }} radius="lg" defaultValue="active">
+          <Tabs orientation="vertical" color='#69a0d7' variant="pills" style={{ padding: '20px 25px' }} radius="lg" defaultValue="active">
             <Tabs.List style={{ gap: '10px' }}>
               <Tabs.Tab value="active" leftSection={<IconList style={iconStyle} />} style={{ ...tabStyle, marginRight: '10px' }}>
                 <Title order={6}>Processi Attivi</Title>
@@ -130,7 +130,7 @@ const App = () => {
                 </Tabs.Tab>
               )}
             </Tabs.List>
-            <Tabs.Panel value="active">
+            <Tabs.Panel style={{paddingLeft: '25px'}} value="active">
               <div style={{ marginTop: '20px' }}>
                 <h2>Active processes</h2>
                 {role === '1' && (
@@ -183,23 +183,18 @@ const App = () => {
               </div>
             </Tabs.Panel>
             <Tabs.Panel style={{paddingLeft: '25px'}} value="search">
-              <h2 style={{ marginLeft: '20px' }}>Search by Lot Number</h2>
+              <h2>Search by Lot Number</h2>
               <SearchByLotNumber
                 allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
               />
             </Tabs.Panel>
-            <Tabs.Panel value="history">
+            <Tabs.Panel style={{paddingLeft: '25px'}} value="history">
               <h2>Storico</h2>
               <CompletedSteps allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)} />
-            <Tabs.Panel style={{paddingLeft: '25px'}} value="history">
-              <h2 style={{ marginLeft: '20px' }}>Storico</h2>
-              <CompletedSteps
-                allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
-              />
             </Tabs.Panel>
             {role === '1' && (
               <Tabs.Panel style={{paddingLeft: '25px'}} value="roles">
-                <h2 style={{marginLeft: '20px' }}>Roles management center</h2>
+                <h2>Roles management center</h2>
                 <RoleAssignment contract={factoryContract} account={account} updateState={() => updateState()}/>
               </Tabs.Panel>
             )}
