@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TextInput, Button, Select, Text} from '@mantine/core';
+import { TextInput, Button, Select, Text } from '@mantine/core';
 import { toast } from 'react-toastify';
 import { IconTrashXFilled } from '@tabler/icons-react';
-import 'react-toastify/dist/ReactToastify.css';
+import Web3 from 'web3';
 
 const RoleAssignment = ({ contract, account, updateState }) => {
-  // State for managing form inputs and assigned roles
+  // State for managing form inputs, assigned roles and error messagges
   const [address, setAddress] = useState('');
   const [role, setRole] = useState('');
   const [assignedRoles, setAssignedRoles] = useState([]);
   const [assignError, setAssignError] = useState('');
-  
-  // Clear assign error on address input focus
+
+  // Clear assign error state
   const handleAddressFocus = useCallback(() => {
     setAssignError('');
   }, []);
@@ -45,6 +45,10 @@ const RoleAssignment = ({ contract, account, updateState }) => {
   // Assign a role to an address
   const assignRole = useCallback(async () => {
     try {
+      if (!Web3.utils.isAddress(address)) {
+        setAssignError("L'indirizzo fornito non è valido");
+        return;
+      }
       const currentRole = (await contract.methods.roles(address).call()).toString();
       if (currentRole === role) {
         setAssignError("L'utente ha già questo ruolo");
@@ -74,7 +78,7 @@ const RoleAssignment = ({ contract, account, updateState }) => {
       if (isLastAdmin) {
         toast.error("Non puoi rimuovere l'ultimo admin rimasto")
         return;
-      }else{
+      } else {
         await contract.methods.removeRole(removeAddress).send({ from: account });
         setAssignedRoles(prevRoles => prevRoles.filter(assignedRole => assignedRole.account !== removeAddress));
         toast.success("Ruolo rimosso con successo");
@@ -94,47 +98,48 @@ const RoleAssignment = ({ contract, account, updateState }) => {
   ];
 
   return (
-    <div style={{ maxWidth: '60%'}} >
-        <div id='assign-group'>
-          <TextInput
-            placeholder="Indirizzo dell'account"
-            radius="md"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            onFocus={handleAddressFocus}
-            style={{ minWidth: '35%'}}
-          />
-            <Select
-              placeholder="Ruolo"
-              radius="md"
-              data={roleOptions}
-              value={role}
-              defaultValue="1"
-              onChange={(value) => setRole(value)}
-              style={{ maxWidth: '13%', marginLeft:'10px'}}
-            />
-            <Button radius="md" style={{ maxWidth: '10%', marginLeft:'10px'}} onClick={assignRole}>Aggiungi</Button>
-            {assignError && <Text style={{ color: '#A81C07', marginLeft:'20px'}}>{assignError}</Text>}
-            
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Account</th>
-              <th>Ruolo</th>
+    // Render the table with address-roles and handle role management
+    <div style={{ maxWidth: '60%' }} >
+      <div id='assign-group'>
+        <TextInput
+          placeholder="Indirizzo dell'account"
+          radius="md"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          onFocus={handleAddressFocus}
+          style={{ minWidth: '35%' }}
+        />
+        <Select
+          placeholder="Ruolo"
+          radius="md"
+          data={roleOptions}
+          value={role}
+          defaultValue="1"
+          onChange={(value) => setRole(value)}
+          style={{ maxWidth: '13%', marginLeft: '10px' }}
+        />
+        <Button radius="md" style={{ maxWidth: '10%', marginLeft: '10px' }} onClick={assignRole}>Aggiungi</Button>
+        {assignError && <Text style={{ color: '#A81C07', marginLeft: '20px' }}>{assignError}</Text>}
+
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Account</th>
+            <th>Ruolo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {assignedRoles.map((assignedRole, index) => (
+            <tr key={index}>
+              <td style={{ textAlign: 'center' }}><IconTrashXFilled color='#A81C07' onClick={() => handleClick(assignedRole.account)} style={{ cursor: 'pointer' }} /></td>
+              <td>{assignedRole.account}</td>
+              <td>{assignedRole.role === '1' ? 'Admin' : assignedRole.role === '2' ? 'Supervisor' : 'Operator'}</td>
             </tr>
-          </thead>
-          <tbody>
-            {assignedRoles.map((assignedRole, index) => (
-              <tr key={index}>
-                <td style={{textAlign:'center'}}><IconTrashXFilled color='#A81C07' onClick={() => handleClick(assignedRole.account)} style={{ cursor: 'pointer' }}/></td>
-                <td>{assignedRole.account}</td>
-                <td>{assignedRole.role === '1' ? 'Admin' : assignedRole.role === '2' ? 'Supervisor' : 'Operator'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

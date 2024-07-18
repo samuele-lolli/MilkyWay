@@ -80,7 +80,7 @@ table {
     text-align: left;
     border-radius: 12px;
     overflow: hidden;
-    border: 0.2px solid #ddd; /* Ridotto lo spessore del bordo */
+    border: 0.2px solid #ddd;
 }
 
 th, td {
