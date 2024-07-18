@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Input, CloseButton, Text, ActionIcon, Badge } from '@mantine/core';
-import { IconSearch, IconRefresh } from '@tabler/icons-react';
+import { Input, Badge } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
 import { useMantineTheme } from '@mantine/core';
+import { isDateInitialized, getLotStatus } from '../utils';
 
 const SearchByLotNumber = ({ allSteps }) => {
   // State for storing filtered steps and search input value
@@ -9,21 +10,6 @@ const SearchByLotNumber = ({ allSteps }) => {
   const [searchLotNumber, setSearchLotNumber] = useState('');
 
   const theme = useMantineTheme();
-
-  // Utility function to check if a date is valid
-  const isDateInitialized = (timestamp) => {
-    return new Date(parseInt(timestamp) * 1000).getTime() > new Date('1970-01-01T00:00:00Z').getTime();
-  };
-
-  // Get lot status based on filtered steps
-  const getLotStatus = useCallback(() => {
-    const isFailed = filteredSteps.some(step => step.failed);
-    if (isFailed) {
-      return { text: 'Fallito', color: '#A81C07' };
-    }
-    const isCompleted = filteredSteps.every(step => step.completed);
-    return { text: isCompleted ? 'Completato' : 'In corso', color: isCompleted ? 'darkgreen' : 'orange' };
-  }, [filteredSteps]);
 
   // Handle search input change
   const handleSearch = useCallback((event) => {
@@ -37,28 +23,6 @@ const SearchByLotNumber = ({ allSteps }) => {
     }
   }, [allSteps]);
 
-  // Clear search input
-  const handleClear = useCallback(() => {
-    setSearchLotNumber('');
-    setFilteredSteps([]);
-  }, []);
-
-  // Refresh search results
-  const handleRefresh = useCallback(() => {
-    if (searchLotNumber) {
-      const filtered = allSteps.filter(step => String(step[6]) === searchLotNumber);
-      setFilteredSteps(filtered);
-    }
-  }, [allSteps, searchLotNumber]);
-
-  const inputStyles = {
-    input: {
-      borderColor: theme.colors.brand[6],
-      borderWidth: '2px',
-      maxWidth: '500px',
-    }
-  };
-
   return (
     <div style={{ marginTop: '20px',  maxWidth:'80%' }} >
       <div style={{ position: 'relative' }}>
@@ -70,11 +34,7 @@ const SearchByLotNumber = ({ allSteps }) => {
         onChange={handleSearch}
         mt="md"
         placeholder="Inserisci il numero di lotto"
-        styles={{
-          input: {
-            ...inputStyles.input,// Assicurati che il contenitore input sia relativo
-          }
-        }}
+        styles={{input: {borderColor: theme.colors.brand[6],borderWidth: '2px',maxWidth: '500px',}}}
       />
       </div>
       {searchLotNumber && (
@@ -83,7 +43,7 @@ const SearchByLotNumber = ({ allSteps }) => {
             <>
               <h3 style={{ display: 'flex', alignItems: 'center' }}>
                 Lotto {Number(searchLotNumber)}
-                <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={getLotStatus().color}>{getLotStatus().text}</Badge>
+                <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={getLotStatus(filteredSteps).color}>{getLotStatus(filteredSteps).text}</Badge>
                 <Badge style={{ marginLeft: '10px', fontSize: '10px' }} color={filteredSteps[7][0] == "Stoccaggio refrigerato" ? 'blue' : 'green'}>
                   {filteredSteps[7][0] == "Stoccaggio refrigerato" ? 'Latte Intero' : 'Lunga Conservazione'}
                 </Badge>

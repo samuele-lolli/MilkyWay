@@ -1,6 +1,6 @@
 const locationOptionsIntero = [
-    ["Fattoria Clarkson", "Allevamento Lolli", "Fattoria Vincenzi", "Fattoria Becchi"], // Options for step 0
-    ["EE892HJ", "XS834HJ", "TL456KM", "ZP789NR", "FG123QW", "VB567OP"], // Opzioni per il passo 1
+    ["Fattoria Clarkson", "Allevamento Lolli", "Fattoria Vincenzi", "Fattoria Becchi"],
+    ["EE892HJ", "XS834HJ", "TL456KM", "ZP789NR", "FG123QW", "VB567OP"],
     ["Decanter A", "Decanter B", "Decanter C", "Decanter D"],
     ["Unità di standardizzazione A", "Unità di standardizzazione B", "Unità di standardizzazione C", "Unità di standardizzazione D"],
     ["Omogeneizzatore A", "Omogeneizzatore B", "Omogeneizzatore C", "Omogeneizzatore D"],
@@ -12,8 +12,8 @@ const locationOptionsIntero = [
   ];
 
   const locationOptionsLC = [
-    ["Fattoria Clarkson", "Allevamento Lolli", "Fattoria Vincenzi", "Fattoria Becchi"], // Options for step 0
-    ["EE892HJ", "XS834HJ", "TL456KM", "ZP789NR", "FG123QW", "VB567OP"], // Opzioni per il passo 1
+    ["Fattoria Clarkson", "Allevamento Lolli", "Fattoria Vincenzi", "Fattoria Becchi"],
+    ["EE892HJ", "XS834HJ", "TL456KM", "ZP789NR", "FG123QW", "VB567OP"],
     ["Decanter A", "Decanter B", "Decanter C", "Decanter D"],
     ["Unità di standardizzazione A", "Unità di standardizzazione B", "Unità di standardizzazione C", "Unità di standardizzazione D"],
     ["Omogeneizzatore A", "Omogeneizzatore B", "Omogeneizzatore C", "Omogeneizzatore D"],
