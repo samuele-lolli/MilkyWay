@@ -8,12 +8,16 @@ import math
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 
-allevamenti_nomi = ["Fattoria Clarkson", "Allevamento Lolli", "Fattoria Vincenzi", "Fattoria Becchi"]
-retailer_nomi = ["Pam Panorama Via Irnerio", "Famila Savignano", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
+# Constants
+EARTH_RADIUS_KM = 6371.0
+ALLEVAMENTI_NOMI = ["Fattoria Clarkson", "Allevamento Lolli", "Fattoria Vincenzi", "Fattoria Becchi"]
+RETAILER_NOMI = ["Pam Panorama Via Irnerio", "Famila Savignano", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
+TRUCK_ROUTE_PATH = "output/truck_route_data.json"
+ALLEVAMENTI_ROAD_PATH = "output/route_data_allevamenti.json"
+RETAILER_ROAD_PATH = "output/route_data_retailer.json"
 
+# Calculate the great-circle distance between two points on the Earth's surface
 def haversine(coord1, coord2):
-    R = 6371.0  # Raggio della Terra in km
-
     lat1, lon1 = coord1
     lat2, lon2 = coord2
 
@@ -23,63 +27,51 @@ def haversine(coord1, coord2):
     a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-    distance = R * c
-    return distance
+    return EARTH_RADIUS_KM * c
 
+# Check if each point in truck_data is within 2 km of any point in the destination_path
 def is_within_2km(truck_data, destination_path):
     for truck_point in truck_data:
-        within_2km = False
-        for dest_point in destination_path:
-            if haversine(truck_point, dest_point) <= 2:
-                within_2km = True
-                break
-        if not within_2km:
-            return False
+        if any(haversine(truck_point, dest_point) <= 2 for dest_point in destination_path):
+            continue
+        return False
     return True
 
 @app.route('/transportSimulate', methods=['POST'])
-def transportSimulate():
-    if request.is_json:
-        data = request.get_json()
-        loc_value = data.get("loc", "")
-        comando = ["python", "utils/truck.py", loc_value]
+def transport_simulate():
+    if not request.is_json:
+        return jsonify({"message": "Request must be JSON"}), 400
+
+    data = request.get_json()
+    loc_value = data.get("loc")
+    
+    if loc_value not in ALLEVAMENTI_NOMI + RETAILER_NOMI:
+        return jsonify({"message": "Argument not in list"}), 500
+    
+    # Determine the appropriate standard road file based on loc_value
+    standard_road = ALLEVAMENTI_ROAD_PATH if loc_value in ALLEVAMENTI_NOMI else RETAILER_ROAD_PATH
+
+    # Run the external script to generate the truck route data
+    try:
+        subprocess.run(["python", "utils/truck.py", loc_value], check=True)
+
+        # Load the generated truck data
+        with open(TRUCK_ROUTE_PATH, 'r') as f:
+            truck_data = json.load(f)['points']
+
+        # Load the standard road data
+        with open(standard_road, 'r') as f:
+            roads_data = json.load(f)
         
-        # Path del file JSON generato da truck.py
-        json_file_path = "output/truck_route_data.json"
+        # Find the destination path
+        destination_path = next((farm["points"] for farm in roads_data if farm["name"] == loc_value), [])
 
-        if loc_value in allevamenti_nomi:
-            standard_road = "output/route_data_allevamenti.json"
-        elif loc_value in retailer_nomi:
-            standard_road = "output/route_data_retailer.json"
-        else: 
-            return jsonify({"message": "Argument not in list"}), 500
-        
-        try:
-            subprocess.run(comando, check=True)
-            with open(json_file_path, 'r') as f:
-                truck_data = json.load(f)
-            
-
-            with open(standard_road, 'r') as f:
-                roads_data = json.load(f)
-            
-            # Variabile per memorizzare il percorso di destinazione
-            destination_path = []
-
-            # Ricerca del percorso corrispondente al nome in loc
-            for farm in roads_data:
-                if farm["name"] == loc_value:
-                    destination_path = farm["points"]
-                    break
-
-            result = is_within_2km(truck_data['points'], destination_path)
-            
-            return jsonify(result)
-                
-        except subprocess.CalledProcessError as e:
-            return jsonify({"message": "An error occurred"}), 500
-
-    return jsonify({"message": "Request must be JSON"}), 400
+        # Check if the truck route is within 2 km of the destination path
+        result = is_within_2km(truck_data, destination_path)
+        return jsonify(result)
+    
+    except subprocess.CalledProcessError:
+        return jsonify({"message": "An error occurred"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
