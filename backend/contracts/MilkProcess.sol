@@ -8,14 +8,14 @@ contract MilkProcess {
 
     // Step struct represents a single step in the milk processing workflow.
     struct Step {
-        string name;           // Name of the step
-        address supervisor;    // Address of the supervisor responsible for this step
-        bool completed;        // Indicates if the step is completed
-        uint startTime;        // Timestamp when the step started
-        uint endTime;          // Timestamp when the step ended
-        string location;       // Location where the step took place
-        uint lotNumber;        // Lot number associated with this step
-        bool failed;           // Indicates if the step has failed
+        string name;
+        address supervisor;    
+        bool completed;        
+        uint startTime;       
+        uint endTime;         
+        string location;     
+        uint lotNumber;       
+        bool failed;           
     }
 
     // Array to store all steps in the process.
@@ -37,8 +37,8 @@ contract MilkProcess {
         factory = _factory;
         isFailed = false;
         isIntero = _isIntero;
-        initializeSteps();                // Initialize the steps in the process
-        steps[0].startTime = block.timestamp;  // Set the start time of the first step
+        initializeSteps();               
+        steps[0].startTime = block.timestamp;  
     }
 
     // Internal function to initialize the steps based on the milk type.
