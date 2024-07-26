@@ -147,6 +147,8 @@ tr:last-child td:last-child {
     background-position: center;
     width: auto;
     padding: 40px 25px;
+    box-shadow: 4.0px 8.0px 8.0px hsla(207, 17%, 20%, 0.38);
+    z-index: 50px;
     border-radius: 20px;
     margin: 20px;
 }
