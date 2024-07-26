@@ -1,5 +1,5 @@
 // Setup the local blockchain network and the solidity compiler
-export default {
+module.exports = {
   networks: {
     development: {
       host: "192.168.0.119",

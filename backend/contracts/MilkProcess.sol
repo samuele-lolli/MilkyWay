@@ -28,7 +28,7 @@ contract MilkProcess {
     address public factory;
     // Indicates if the process has failed.
     bool public isFailed;
-    // Indicates if the process is for intero (whole) milk.
+    // Indicates if the process is for whole milk.
     bool public isIntero;
 
     // Constructor initializes the contract with the lot number, factory address, and milk type.
