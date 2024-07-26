@@ -11,7 +11,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
-  // State variables
+  // State for managing web3, account, processes management
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
   const [factoryContract, setFactoryContract] = useState(null);
@@ -74,15 +74,7 @@ const App = () => {
           processContract.methods.isIntero().call()
         ]);
 
-        return {
-          address,
-          lotNumber,
-          steps,
-          currentStepIndex: parseInt(currentStepIndex),
-          isCompleted,
-          isFailed,
-          isIntero
-        };
+        return { address, lotNumber, steps, currentStepIndex: parseInt(currentStepIndex), isCompleted, isFailed, isIntero };
       }));
 
       setProcessContracts(allProcesses.filter(p => !p.isCompleted && !p.isFailed));
@@ -105,6 +97,7 @@ const App = () => {
   };
 
   return (
+    // Render all the child component and the main structure of the interface
     <div id='app'>
     <LoadingOverlay visible={loading} overlayProps={{ radius: 'sm', blur: 10 }} id="centered-overlay"/>
       <ToastContainer />
@@ -130,7 +123,7 @@ const App = () => {
                 </Tabs.Tab>
               )}
             </Tabs.List>
-            <Tabs.Panel style={{paddingLeft: '25px'}} value="active">
+            <Tabs.Panel style={{ paddingLeft: '25px' }} value="active">
               <div style={{ marginTop: '20px' }}>
                 <h2>Active processes</h2>
                 {role === '1' && (
@@ -182,20 +175,20 @@ const App = () => {
                 ))}
               </div>
             </Tabs.Panel>
-            <Tabs.Panel style={{paddingLeft: '25px'}} value="search">
+            <Tabs.Panel style={{ paddingLeft: '25px' }} value="search">
               <h2>Search by Lot Number</h2>
               <SearchByLotNumber
                 allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)}
               />
             </Tabs.Panel>
-            <Tabs.Panel style={{paddingLeft: '25px'}} value="history">
+            <Tabs.Panel style={{ paddingLeft: '25px' }} value="history">
               <h2>Storico</h2>
               <CompletedSteps allSteps={processContracts.concat(completedProcesses).flatMap(p => p.steps)} />
             </Tabs.Panel>
             {role === '1' && (
-              <Tabs.Panel style={{paddingLeft: '25px'}} value="roles">
+              <Tabs.Panel style={{ paddingLeft: '25px' }} value="roles">
                 <h2>Roles management center</h2>
-                <RoleAssignment contract={factoryContract} account={account} updateState={() => updateState()}/>
+                <RoleAssignment contract={factoryContract} account={account} updateState={() => updateState()} />
               </Tabs.Panel>
             )}
           </Tabs>
