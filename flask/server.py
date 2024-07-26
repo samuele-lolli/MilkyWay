@@ -37,6 +37,7 @@ def is_within_2km(truck_data, destination_path):
         return False
     return True
 
+# Route for the react Dapp for transport simulation
 @app.route('/transportSimulate', methods=['POST'])
 def transport_simulate():
     if not request.is_json:

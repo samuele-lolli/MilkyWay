@@ -145,4 +145,3 @@ const RoleAssignment = ({ contract, account, updateState }) => {
 };
 
 export default RoleAssignment;
-
