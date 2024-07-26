@@ -18,7 +18,11 @@ const CompletedSteps = ({ allSteps }) => {
       lotNumber,
       steps,
       isIntero: steps.some(step => step[0] === 'Stoccaggio refrigerato')
-    })).sort((a, b) => a.lotNumber.localeCompare(b.lotNumber));
+    })).sort((a, b) => {
+      const numA = parseInt(a.lotNumber, 10);
+      const numB = parseInt(b.lotNumber, 10);
+      return numA - numB;
+    });
   }, [allSteps]);
 
   // Filter lots based on selected filter

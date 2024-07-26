@@ -20,12 +20,12 @@ const measureTemperatures = () => {
 
     for (let i = 0; i < frames; i++) {
         const random = Math.random();
-        if (random < 0.999) {
+        if (random <= 0.999) {
             // 99.99% chance of being less than or equal to 4°C
-            temperatures.push(1 + Math.random() * 2); // Generates a number between 1 and 4
+            temperatures.push(Math.random() * 3); // Generates a number between 1 and 4
         } else {
             // 0.01% chance of being greater than 4°C
-            temperatures.push(4 + Math.random() * 2); // Generates a number between 4 and 6
+            temperatures.push(4 + Math.random() * 3); // Generates a number between 4 and 6
         }
     }
     return temperatures;

@@ -76,21 +76,12 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
       if (steps[index][1].toLowerCase() !== account.toLowerCase()) {
         throw new Error("Solo il supervisore assegnato può completare questo step");
       }
-      console.log("Completing step:", index, "with location:", location, "for process address:", processContractAddress);
       await actualContract.methods.completeStep(location).send({ from: account })
-      .on('transactionHash', function(hash){
-        console.log('Transaction Hash:', hash);
-    })
-    .on('receipt', function(receipt){
-        console.log('Transaction Receipt:', receipt);
-    })
-    .on('confirmation', function(confirmationNumber, receipt){
-        console.log('Transaction Confirmation:', confirmationNumber, receipt);
-    })
-    .on('error', console.error);
-      console.log("Step completed successfully");
+      if(index == 9){
+        toast.success("Step completato con successo");
+      }
+      
       await updateState();
-      toast.success("Step completato con successo");
     } catch (error) {
       console.error("Error completing step:", error);
       toast.error(error.message);

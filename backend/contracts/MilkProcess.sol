@@ -114,7 +114,7 @@ contract MilkProcess {
         if (valid) {
             step.completed = true;
             step.endTime = block.timestamp;
-            step.location = "Procedure up to standards";
+            step.location = "Procedura adeguata agli standard";
             currentStepIndex++;
             if (currentStepIndex < steps.length) {
                 steps[currentStepIndex].startTime = block.timestamp;
@@ -124,9 +124,9 @@ contract MilkProcess {
             isFailed = true;
             step.endTime = block.timestamp;
             if (currentStepIndex == 1) {
-                step.location = "Road transport failed";
+                step.location = "Trasporto in strada fallito";
             } else if ((currentStepIndex == 7 || currentStepIndex == 8) && isIntero) {
-                step.location = "Storage failed";
+                step.location = "Storage fallito";
             }
         }
     }
@@ -140,7 +140,7 @@ contract MilkProcess {
             if (currentStepIndex == 9) {
                 step.location = _location;
             } else {
-                step.location = "Procedure up to standards";
+                step.location = "Procedura adeguata agli standard";
             }
             currentStepIndex++;
             if (currentStepIndex < steps.length) {
@@ -150,7 +150,7 @@ contract MilkProcess {
             step.failed = true;
             isFailed = true;
             step.endTime = block.timestamp;
-            step.location = "Truck's location incoherent with destination address";
+            step.location = "La location del truck e' diversa dall'address di destinazione";
         }
     }
 
