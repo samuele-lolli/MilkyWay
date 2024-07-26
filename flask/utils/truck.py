@@ -7,8 +7,6 @@ import random
 
 # Calculate vehicle positions along the route at specified intervals.
 def calculate_positions(route, graph, interval):
-    
-
     positions = []
     elapsed_time = 0
     remaining_distance = 0
