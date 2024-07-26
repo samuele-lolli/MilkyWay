@@ -16,13 +16,13 @@ const measureTemperatures = () => {
     const temperatures = [];
 
     for (let i = 0; i < frames; i++) {
-        const random = Math.random();
-        if (random < 0.999) {
-            // 99.9% chance of being less than or equal to 10
-            temperatures.push(6 + Math.random() * 3); // Generates a number between 7 and 10
+        const random = Math.floor(Math.random() * 1000) + 1;
+        if (random < 999) {
+            // 99.9% chance of being less than or equal to 4
+            temperatures.push(Math.random() * (4 - 0) + 0); // generates a temperature equal or below 4
         } else {
             // 0.1% chance of being greater than 10
-            temperatures.push(10 + Math.random() * 2); // Generates a number between 10 and 12
+            temperatures.push(Math.random() * (8 - 4) + 4);  // generates a temperature above 4
         }
     }
     return temperatures;

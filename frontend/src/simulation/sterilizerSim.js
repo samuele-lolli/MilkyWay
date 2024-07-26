@@ -10,13 +10,12 @@
 const measureTemperatures = () => {
     const temperatures = [];
     for (let i = 0; i < 15; i++) {
-        const random = Math.random();
-        if (random < 0.99) {
-            // 99% chance of being greater than 135
-            temperatures.push(135 + Math.random() * 3);
+        const random = Math.floor(Math.random() * 1000) + 1;
+        if (random < 999) {
+            // 99.9% chance of being greater than 135
+            temperatures.push(Math.random() * (140 - 135) + 135);  // generates a temperature equal or above 71.7
         } else {
-            // 1% chance of being less than 135
-            temperatures.push(132 + Math.random() * 2);
+            temperatures.push(Math.random() * (134.9 - 130.9) + 130.9); // generates a temperature below 71.7
         }
     }
     return temperatures;
