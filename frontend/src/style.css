@@ -84,6 +84,10 @@ body {
     pointer-events: all;  /* Absorbs users clicks  */
   }  
 
+.no-scroll {
+overflow: hidden;
+}
+
 table {
     width: 100%;
     border-collapse: separate;

@@ -48,6 +48,21 @@ const App = () => {
 
     init();
   }, []);
+  
+  useEffect(() => {
+    if (loading) {
+      // Blocca lo scroll aggiungendo una classe al body
+      document.body.classList.add('no-scroll');
+    } else {
+      // Rimuovi la classe quando non è più necessario
+      document.body.classList.remove('no-scroll');
+    }
+
+    // Cleanup function per rimuovere la classe quando il componente viene smontato
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, [loading]);
 
   // Update state when web3 or factoryContract changes
   useEffect(() => {
