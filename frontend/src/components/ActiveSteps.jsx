@@ -144,20 +144,29 @@ const ActiveSteps = ({ setLoading, web3, factoryContract, processContractAddress
         setLoading(false);
       }
     } else {
+      toast.error("The truck failed to mantain temperature");
       await actualContract.methods.isTemperatureOK(travelTemp).send({ from: account });
       await updateState();
     }
   };
 
   const handleCheckStorage = async (processContractAddress) => {
-    console.log("Storage temperature: ", checkStorage(processContractAddress));
-    await actualContract.methods.isTemperatureOK(checkTravel(processContractAddress)).send({ from: account });
+    const travelResult = checkStorage(processContractAddress)
+    console.log("Storage temperature: ", travelResult);
+    await actualContract.methods.isTemperatureOK(travelResult).send({ from: account });
+    if(!travelResult){
+      toast.error("The refrigerator failed to mantain temperature");
+    }
     await updateState();
   };
 
   const handleCheckShipping = async (processContractAddress) => {
-    console.log("Shipping temperature: ", checkStorage(processContractAddress));
-    await actualContract.methods.isTemperatureOK(checkShipping(processContractAddress)).send({ from: account });
+    const shippingResult = checkShipping(processContractAddress)
+    console.log("Shipping temperature: ", shippingResult);
+    await actualContract.methods.isTemperatureOK(shippingResult).send({ from: account });
+    if(!shippingResult){
+      toast.error("The truck failed to mantain temperature");
+    }
     await updateState();
   };
 

@@ -99,7 +99,7 @@ const App = () => {
   return (
     // Render all the child component and the main structure of the interface
     <div id='app'>
-      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+    <LoadingOverlay visible={loading} overlayProps={{ radius: 'sm', blur: 10 }} id="centered-overlay"/>
       <ToastContainer />
       {(role === '1' || role === '2' || role === '3') ? (
         <div>
