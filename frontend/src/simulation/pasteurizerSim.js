@@ -9,13 +9,12 @@
 const measureTemperatures = () => {
     const temperatures = [];
     for (let i = 0; i < 30; i++) {
-        const random = Math.random();
-        if (random < 0.99) {
-            // 99% chance of being greater than 71.7
-            temperatures.push(71.7 + Math.random() * 3); // Generates a number between 71.7 and 74.7
+        const random = Math.floor(Math.random() * 1000) + 1;
+        if (random < 999) {
+            // 99.9% chance of being greater than 71.7
+            temperatures.push(Math.random() * (74.7 - 71.7) + 71.7);  // generates a temperature equal or above 71.7
         } else {
-            // 1% chance of being less than 71.7
-            temperatures.push(69.7 + Math.random() * 2); // Generates a number between 69.7 and 71.7
+            temperatures.push(Math.random() * (71.6 - 68.6) + 68.6); // generates a temperature below 71.7
         }
     }
     return temperatures;

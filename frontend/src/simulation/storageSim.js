@@ -19,14 +19,14 @@ const measureTemperatures = () => {
     const temperatures = [];
 
     for (let i = 0; i < frames; i++) {
-        const random = Math.random();
-        if (random <= 0.999) {
+        const random = Math.floor(Math.random() * 1000) + 1;
+        if (random <= 999) {
             // 99.99% chance of being less than or equal to 4°C
-            temperatures.push(Math.random() * 3); // Generates a number between 1 and 4
-        } else {
-            // 0.01% chance of being greater than 4°C
-            temperatures.push(4 + Math.random() * 3); // Generates a number between 4 and 6
-        }
+             temperatures.push(Math.random() * (4 - 0) + 0); // generates a temperature equal or below 4
+            } else {
+                // 0.1% chance of being greater than 10
+                temperatures.push(Math.random() * (8 - 4) + 4);  // generates a temperature above 4
+            }
     }
     return temperatures;
 };
