@@ -124,9 +124,11 @@ contract MilkProcess {
             isFailed = true;
             step.endTime = block.timestamp;
             if (currentStepIndex == 1) {
-                step.location = "Trasporto in strada fallito";
-            } else if ((currentStepIndex == 7 || currentStepIndex == 8) && isIntero) {
-                step.location = "Storage fallito";
+                step.location = "Il camion di raccolta non ha mantenuto la temperatura richiesta";
+            } else if ((currentStepIndex == 7) && isIntero) {
+                step.location = "La cella non ha mantenuto la temperatura richiesta";
+            } else if ((currentStepIndex == 8) && isIntero) {
+                 step.location = "Il camion di consegna non ha mantenuto la temperatura richiesta";
             }
         }
     }

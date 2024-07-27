@@ -16,7 +16,8 @@ const getWeb3 = () =>
       } else if (window.web3) {
         resolve(window.web3);
       } else {
-        const provider = new Web3.providers.HttpProvider('');
+
+        const provider = new Web3.providers.HttpProvider('ip_address:7545');
         const web3 = new Web3(provider);
         resolve(web3);
       }

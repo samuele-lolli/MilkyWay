@@ -13,6 +13,7 @@ const RoleAssignment = ({ contract, account, updateState }) => {
 
   // Clear assign error state
   const handleAddressFocus = useCallback(() => {
+    setAddress('');
     setAssignError('');
   }, []);
 
@@ -21,7 +22,6 @@ const RoleAssignment = ({ contract, account, updateState }) => {
     const fetchAssignedRoles = async () => {
       try {
         const userRole = await contract.methods.getRole(account).call();
-        setAddress(account);
         setRole(String(userRole));
         const rolesData = await contract.methods.getAllRoles().call();
         const roles = rolesData[0].map((role, index) => ({
@@ -107,7 +107,7 @@ const RoleAssignment = ({ contract, account, updateState }) => {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           onFocus={handleAddressFocus}
-          style={{ minWidth: '35%' }}
+          style={{ width:'35%', minWidth: 'fit-content' }}
         />
         <Select
           placeholder="Ruolo"
@@ -116,9 +116,9 @@ const RoleAssignment = ({ contract, account, updateState }) => {
           value={role}
           defaultValue="1"
           onChange={(value) => setRole(value)}
-          style={{ maxWidth: '13%', marginLeft: '10px' }}
+          style={{ maxWidth: '15%', marginLeft: '10px', minWidth: 'fit-content' }}
         />
-        <Button radius="md" style={{ maxWidth: '10%', marginLeft: '10px' }} onClick={assignRole}>Aggiungi</Button>
+        <Button radius="md" style={{ maxWidth: '15%', marginLeft: '10px', minWidth: 'fit-content' }} onClick={assignRole}>Aggiungi</Button>
         {assignError && <Text style={{ color: '#A81C07', marginLeft: '20px' }}>{assignError}</Text>}
 
       </div>
