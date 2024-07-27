@@ -31,7 +31,14 @@ The [mobile app](https://github.com/gbekss/MilkChain-Consumer) uses React-Native
 ![Project architecture](https://github.com/samuele-lolli/MilkChain/assets/58303470/bc31109b-aace-400c-9fa5-7174c5158e6c)
 
 ### Flow
-<img width="875" alt="Screenshot 2024-07-16 at 19 08 42" src="https://github.com/user-attachments/assets/b418464c-f25c-4ea8-bc27-2e6a4a61654f">
+All admins have three fundamental functions in the application:
+* Users' role management
+* Process creation
+* Supervisors designation
+In regards to process creation, supervisors will have to distinguish between whole milk and long life milk production lots. The two differ from one another for heat treatment and subsequent storage.
+Some of the steps in both the types of process are handled by temperature sensors. In addition, all of the steps in which the milk is moved from one location to another rely on a proof-of-location system that will verify the vehicle's path. The sensor vill verify the lot's position at regular intervals and evaluates the reasonability of it, based on the start and end points of the ride.
+![MilkyWay flow](https://github.com/user-attachments/assets/943bacb7-158d-46d2-89b8-4c540aa868f5)
+
 
 
 
