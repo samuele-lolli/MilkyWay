@@ -28,7 +28,8 @@ MilkyWay tracks the production path of milk from collection to distribution divi
 The smart contracts, written in Solidity, are deployed using Truffle on the local blockchain network created using Ganache GUI. The frontend employs Web3.js to interact with the smart contract on the local blockchain network and is written using React.
 The [mobile app](https://github.com/gbekss/MilkChain-Consumer) uses React-Native.
 
-![Project architecture](https://github.com/samuele-lolli/MilkChain/assets/58303470/bc31109b-aace-400c-9fa5-7174c5158e6c)
+![Project Architecture](https://github.com/user-attachments/assets/6a38368f-5a73-4b2c-abe2-372a798ee5f1)
+
 
 ### Flow
 All admins have three fundamental functions in the application:
