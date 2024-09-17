@@ -124,7 +124,7 @@ if __name__ == "__main__":
     ]
     retailer_nomi = ["Pam Panorama Via Irnerio", "Famila Savignano", "Coop 3.0 Mirandola", "Pam Panorama Santarcangelo di Romagna"]
 
-    start_point = (44.888892, 11.065959)  # Parma, Italy
+    start_point = (44.888892, 11.065959)  # Mirandola, Italy
 
     # Colors for farms (blue) and retailers (purple)
     colors = ['blue'] * len(location_allevamenti) + ['purple'] * len(location_retailer)
