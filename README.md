@@ -38,7 +38,9 @@ All admins have three fundamental functions in the application:
 * Supervisors designation
 In regards to process creation, supervisors will have to distinguish between whole milk and long life milk production lots. The two differ from one another for heat treatment and subsequent storage.
 Some of the steps in both the types of process are handled by temperature sensors. In addition, all of the steps in which the milk is moved from one location to another rely on a proof-of-location system that will verify the vehicle's path. The sensor vill verify the lot's position at regular intervals and evaluates the reasonability of it, based on the start and end points of the ride.
-![MilkyWay flow](https://github.com/user-attachments/assets/943bacb7-158d-46d2-89b8-4c540aa868f5)
+![MilkyWay Flow](https://github.com/user-attachments/assets/4c7e5e4e-b136-4f37-acc2-b3a361d0624a)
+
+
 
 
 
