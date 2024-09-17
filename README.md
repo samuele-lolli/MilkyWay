@@ -44,6 +44,8 @@ Some of the steps in both the types of process are handled by temperature sensor
 
 
 
+### More informations
+For more informations, please refer to the [MilkyWay introduction](https://github.com/samuele-lolli/MilkyWay/blob/master/MilkyWay%20Introduction.pdf)
 
 ### Installation & Setup
 Requires:
